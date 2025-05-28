@@ -18,8 +18,11 @@ const (
 	NileTestNetNode = "grpc.nile.trongrid.io:50051"
 	ShastaTestNode  = "grpc.shasta.trongrid.io:50051"
 
-	MainNetUSDTContract     = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
-	NileTestNetUSDTContract = "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj"
+	MainNetUSDTContract = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
+	//NileTestNetUSDTContract = "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj"
+	NileTestNetUSDTContract = "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf"
+
+	TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf
 
 	DefaultTimeout    = 30 * time.Second
 	DefaultFeeLimit   = 100000000 // 100 TRX
