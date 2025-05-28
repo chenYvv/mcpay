@@ -1,0 +1,20 @@
+server:
+  debug: true
+  name: admin
+  port: 8001
+  iplimit: 1
+session:
+  name: admin
+  secret: xxxxxxxxxxxxxxx
+database:
+  mysql:
+    DSN: root:1122334@tcp(127.0.0.1:3308)/mcpay?charset=utf8mb4&timeout=10s&parseTime=true&loc=Local
+    max_open_connections: 100
+    max_idle_connections: 25
+    max_life_seconds: 5*60
+  mongo:
+    host: 162.0.228.90:27020
+#    host: 192.168.31.251:27017
+    user: root
+#    pwd: fdas23fdew
+    pwd: dffhu322

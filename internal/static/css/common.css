@@ -1,0 +1,84 @@
+.frame-body {
+    padding: 20px;
+}
+
+.layui-inline > select {
+    padding: 0 10px;
+}
+
+.layui-form-checkbox {
+    margin-bottom: 10px;
+}
+
+[search] {
+    margin-left: 10px;
+}
+
+.search-btn {
+    float: right;
+}
+
+.ml10 {
+    margin-left: 10px;
+}
+
+.mr10 {
+    margin-right: 10px;
+}
+
+.pointer, [pointer] {
+    color: #01AAED;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+}
+
+::-webkit-scrollbar {
+    width: 4px;
+    background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #999;
+}
+
+::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+.float-clear:after {
+    content: "";
+    display: block;
+    clear: both;
+}
+
+.float-right {
+    float: right;
+}
+
+.float-right + .float-right {
+    margin-right: 15px;
+}
+
+.float-left {
+    float: left;
+}
+
+.float-left + .float-left {
+    margin-left: 15px;
+}
+
+.layui-table-cell {
+    height: auto !important;
+    overflow: visible;
+    text-overflow: inherit;
+    white-space: normal;
+}
+
+.form-title {
+    height: 53px;
+    line-height: 38px;
+    font-weight: 550;
+    font-size: 16px;
+}

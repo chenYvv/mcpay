@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Payment</title>
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+<!-- Facebook Pixel Code -->
+<script>
+    // !function(f,b,e,v,n,t,s)
+    // {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    //     n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    //     if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    //     n.queue=[];t=b.createElement(e);t.async=!0;
+    //     t.src=v;s=b.getElementsByTagName(e)[0];
+    //     s.parentNode.insertBefore(t,s)}(window, document,'script',
+    //     'https://connect.facebook.net/en_US/fbevents.js');
+    // fbq('init', '2511070435745052');
+</script>
+</head>
+<style>
+    .header {
+        height: 50px;
+        background-color: #393D49;
+    }
+    .title {
+        line-height: 50px;
+        font-size: 20px;
+        font-weight: bold;
+        color: #fff;
+        text-align: center;
+        width: 100%;
+        display: inline-block;
+    }
+    .desc {
+        text-align: center;
+        font-size: 40px;
+        font-weight: bold;
+        line-height: 150px;
+        color: #00c700;
+    }
+    .icon {
+        text-align: center;
+    }
+    .submit {
+        margin-top: 50px;
+        font-weight: bold;
+    }
+    .return {
+        text-align: center;
+        font-size: 20px;
+        color: #00c700;
+        margin-top: 80px;
+        font-weight: bold;
+    }
+</style>
+<body>
+    <div class="header">
+        <span class="title">Payment</span>
+    </div>
+    <div class="layui-fluid">
+        <div class="layui-row">
+            <div class="layui-col-xs12 desc">
+                Successful
+            </div>
+        </div>
+        <div class="layui-row">
+            <div class="layui-col-xs12 icon">
+                <i class="layui-icon layui-icon-ok-circle" style="font-size: 150px; color: #00c700;"></i>  
+            </div>
+        </div>
+<!--        <div class="layui-row submit">-->
+<!--            <button type="button" class="layui-btn layui-btn-normal layui-btn-fluid">Back Game</button>-->
+<!--        </div>-->
+<!--        <div class="layui-row">-->
+<!--            <div class="layui-col-xs12 return">-->
+<!--                Please return to the game-->
+<!--            </div>-->
+<!--        </div>-->
+    </div>
+ 
+    <script src="../static/layui/layui.js"></script>
+    <script>
+    layui.use(['layer', 'form', 'jquery'], function(){
+    var layer = layui.layer, 
+        form = layui.form, 
+        $ = layui.jquery;
+
+
+        // let amount = "{{.amount}}";
+        // if( amount > 0 ) {
+        //     fbq('track', 'Purchase', { currency: "USD", value: parseFloat(amount), content_ids: "{{.userid}}"})
+        // }
+
+        // 点击返回
+        // $('.submit button').click(function () {
+        //     if( "{{.redirectUrl}}" != "" ) {
+        //         window.location.href = "{{.redirectUrl}}";
+        //     }
+        // })
+    });
+    </script> 
+</body>
+</html>

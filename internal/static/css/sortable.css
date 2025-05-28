@@ -1,0 +1,79 @@
+.sortable {
+    height: 550px;
+    border: 1px solid #b2b2b2;
+}
+
+.sortable > * {
+    user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.sortable > div {
+    height: 40px;
+    line-height: 40px;
+    padding: 0 10px;
+    border: 1px solid transparent;
+}
+
+.sortable > div:hover {
+    border: 1px solid #5FB878;
+}
+
+.sortable .ghostClass {
+    border: 1px solid #5FB878;
+}
+
+#sortable1 > div > .title {
+    display: inline-block;
+    width: 100%;
+}
+
+#sortable2 > div > .title {
+    display: inline-block;
+    width: 50%;
+    float: left;
+}
+
+#sortable2 > div > .icon {
+    display: inline-block;
+    float: right;
+    width: 25%;
+    text-align: center;
+}
+
+#sortable2 > div > .edit {
+    display: inline-block;
+    color: #01AAED;
+    float: right;
+    width: 25%;
+    text-align: right;
+}
+
+#sortable2 > div > .edit:hover {
+    cursor: pointer;
+}
+
+#sortable3 > div, #sortable4 > div {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#sortable3 > div > *, #sortable4 > div > * {
+    width: 20%;
+    text-align: center;
+}
+
+#sortable3 > div > .edit, #sortable4 > div > .edit {
+    color: #01AAED;
+}
+
+#sortable3 > div > .del, #sortable4 > div > .del {
+    color: firebrick;
+}
+
+#sortable3 > div > .edit, #sortable3 > div > .del, #sortable4 > div > .edit, #sortable4 > div > .del {
+    cursor: pointer;
+}
