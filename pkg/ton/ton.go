@@ -45,7 +45,7 @@ func GetWalletBySeed(seed string) *wallet.Wallet {
 	api := ton.NewAPIClient(client, ton.ProofCheckPolicyFast).WithRetry()
 	api.SetTrustedBlockFromConfig(cfg)
 
-	// seed words of account, you can generate them with any wallet or using wallet.NewSeed() method
+	// seed words of account, you can generate them with any bsc or using bsc.NewSeed() method
 	//words := strings.Split("diet diet attack autumn expose honey skate lounge holiday opinion village priority major enroll romance famous motor pact hello rubber express warfare rose whisper", " ")
 	//words := strings.Split("climb say rather skate usage material flip use maid raise first crucial sister since sure train demise amount alpha speak tell sea afraid luxury", " ")
 	words := strings.Split(seed, " ")
@@ -61,7 +61,7 @@ func GetWalletBySeed(seed string) *wallet.Wallet {
 }
 
 func TonTransactionUSDT(fromSeed, toAddress, amount string) (*tlb.Transaction, error) {
-	//res := wallet.NewSeed()
+	//res := bsc.NewSeed()
 	//fmt.Println(res)
 	//
 	//return
@@ -82,13 +82,13 @@ func TonTransactionUSDT(fromSeed, toAddress, amount string) (*tlb.Transaction, e
 	//// initialize api client.
 	//api := ton.NewAPIClient(conn)
 	//
-	//// // importing wallet.
+	//// // importing bsc.
 	////seedStr := "action goose draft cluster acoustic awake room ready strong other aunt turkey term affair piano disagree flush strategy phrase palace endorse promote dentist blood" // if you don't have one you can generate it with tonwallet.NewSeed().
 	////seedStr := "girl village original police hair capital uncle plate spatial industry witness edge orphan hard drum crush blind labor huge oil host turkey teach below" // if you don't have one you can generate it with tonwallet.NewSeed().
 	//seedStr := "climb say rather skate usage material flip use maid raise first crucial sister since sure train demise amount alpha speak tell sea afraid luxury"
 	//seed := strings.Split(seedStr, " ")
 	//
-	//tonWallet, err := wallet.FromSeed(api, seed, wallet.V5R1Final)
+	//tonWallet, err := bsc.FromSeed(api, seed, bsc.V5R1Final)
 	//if err != nil {
 	//	//log.Error("WALLET ADDRESS: %s", err.Error())
 	//	fmt.Println(err.Error())
@@ -97,7 +97,7 @@ func TonTransactionUSDT(fromSeed, toAddress, amount string) (*tlb.Transaction, e
 	//
 	//block, err := api.CurrentMasterchainInfo(context.Background())
 	//
-	////log.Error("wallet: %s", tonWallet.WalletAddress().Dump())
+	////log.Error("bsc: %s", tonWallet.WalletAddress().Dump())
 	//
 	//balance, err := tonWallet.GetBalance(ctx, block)
 	//if err != nil {
@@ -111,7 +111,7 @@ func TonTransactionUSDT(fromSeed, toAddress, amount string) (*tlb.Transaction, e
 	//UQD2DiDg0m--lsQEDGbE6ukJIpXfF_-dnDRiRjLY56iTgmVl
 
 	//add4 := address.MustParseAddr("UQBg4WdYEdvMHuXPoZNgapLBFd0Y_dza17Vt_rtVFmup8w-T")
-	//log.Error("wallet: %s", add4.Dump())
+	//log.Error("bsc: %s", add4.Dump())
 	//
 	//usdtraw := address.MustParseRawAddr("0:5a60d1b69e3a06d9c15e3aeaf9fda62cf8e0d20c2f8b1e3c7c1e0a1a5ed5d2d8")
 	//log.Error("usdt: %s", usdtraw.String())
@@ -139,7 +139,7 @@ func TonTransactionUSDT(fromSeed, toAddress, amount string) (*tlb.Transaction, e
 	// bound all requests to single ton node
 	ctx := client.StickyContext(context.Background())
 
-	// seed words of account, you can generate them with any wallet or using wallet.NewSeed() method
+	// seed words of account, you can generate them with any bsc or using bsc.NewSeed() method
 	//words := strings.Split("diet diet attack autumn expose honey skate lounge holiday opinion village priority major enroll romance famous motor pact hello rubber express warfare rose whisper", " ")
 	words := strings.Split(fromSeed, " ")
 
@@ -176,7 +176,7 @@ func TonTransactionUSDT(fromSeed, toAddress, amount string) (*tlb.Transaction, e
 	// USDT 剩余
 	token := jetton.NewJettonMasterClient(api, address.MustParseAddr("EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs"))
 
-	// find our jetton wallet
+	// find our jetton bsc
 	tokenWallet, err := token.GetJettonWallet(ctx, w.WalletAddress())
 	if err != nil {
 		return nil, err
@@ -209,7 +209,7 @@ func TonTransactionUSDT(fromSeed, toAddress, amount string) (*tlb.Transaction, e
 		return nil, err
 	}
 
-	// address of receiver's wallet (not token wallet, just usual)
+	// address of receiver's bsc (not token bsc, just usual)
 	to := address.MustParseAddr(toAddress)
 	transferPayload, err := tokenWallet.BuildTransferPayloadV2(to, w.WalletAddress(), amountTokens, tlb.ZeroCoins, comment, nil)
 	if err != nil {
@@ -378,10 +378,10 @@ func Ton() {
 	usdt := jetton.NewJettonMasterClient(api, address.MustParseAddr("EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs"))
 	//usdt := jetton.NewJettonMasterClient(api, address.MustParseAddr("EQBaYNG2njoG2cFeOur5_aYs-ODSDC-LHjx8HgoaXtXS2DJC"))
 
-	// get our jetton wallet address
+	// get our jetton bsc address
 	treasuryJettonWallet, err := usdt.GetJettonWalletAtBlock(context.Background(), treasuryAddress, master)
 	if err != nil {
-		logger.Info("Ton", zap.String("Ton: get jetton wallet address err", err.Error()))
+		logger.Info("Ton", zap.String("Ton: get jetton bsc address err", err.Error()))
 		return
 	}
 
@@ -405,13 +405,13 @@ func Ton() {
 			logger.Info("Ton treasuryJettonWallet：", zap.String("Dump", treasuryJettonWallet.Address().Dump()))
 			logger.Info("Ton treasuryJettonWallet：", zap.Int32("workchain", treasuryJettonWallet.Address().Workchain()))
 
-			// verify that event sender is our jetton wallet
+			// verify that event sender is our jetton bsc
 			if ti.SrcAddr.Equals(treasuryJettonWallet.Address()) {
 				var transfer jetton.TransferNotification
 				if err = tlb.LoadFromCell(&transfer, ti.Body.BeginParse()); err == nil {
 					// convert decimals to 6 for USDT (it can be fetched from jetton details too), default is 9
 					amt := tlb.MustFromNano(transfer.Amount.Nano(), 6)
-					// reassign sender to real jetton sender instead of its jetton wallet contract
+					// reassign sender to real jetton sender instead of its jetton bsc contract
 					src = transfer.Sender
 					//log.Error("received: %s, USDT from: %s", amt.String(), src.String())
 					logger.Info("received USDT", zap.String("received", amt.String()), zap.String("from", src.String()))

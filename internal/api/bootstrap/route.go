@@ -19,7 +19,7 @@ func InitRoutes(r *gin.Engine) {
 	//
 	//r.GET("/pay", routeHandle(&controllers.PayController{}, "Pay"))
 	//r.GET("/callback", routeHandle(&controllers.PayController{}, "PayRes"))
-	//r.POST("/wallet", routeHandle(&controllers.PayController{}, "Wallet"))
+	//r.POST("/bsc", routeHandle(&controllers.PayController{}, "Wallet"))
 	//r.POST("/uploadImg", routeHandle(&controllers.UploadController{}, "UploadImg"))
 	//r.POST("/withdraw", routeHandle(&controllers.WalletController{}, "Withdraw"))
 	//r.POST("/api", routeHandle(&controllers.PayController{}, "Api"))
