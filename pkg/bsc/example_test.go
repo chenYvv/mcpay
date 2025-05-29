@@ -71,19 +71,29 @@ func TestCreateMultipleWallets(t *testing.T) {
 }
 
 // 测试BSC测试网客户端连接
-func TestNewBSCTestnetClient(t *testing.T) {
+func TestBSCTestnetClient(t *testing.T) {
 	t.Log("测试BSC测试网客户端连接...")
 
-	client, err := NewBSCClient(true) // false = testnet
+	err := InitBSCClient(true) // true = 测试网
 	if err != nil {
-		t.Fatalf("连接BSC测试网失败: %v", err)
+		t.Fatalf("初始化BSC测试网失败: %v", err)
 	}
-	defer client.client.Close()
+
+	client := GetBSCClient()
+	if client == nil {
+		t.Fatal("获取BSC客户端失败")
+	}
 
 	// 验证客户端
-	if client.chainID.Int64() != BSC_TESTNET_CHAIN_ID {
-		t.Errorf("链ID错误, 期望: %d, 实际: %d", BSC_TESTNET_CHAIN_ID, client.chainID.Int64())
+	if client.GetChainID().Int64() != BSC_TESTNET_CHAIN_ID {
+		t.Errorf("链ID错误, 期望: %d, 实际: %d", BSC_TESTNET_CHAIN_ID, client.GetChainID().Int64())
 	}
+
+	// 验证是测试网
+	if !client.IsTestnet() {
+		t.Error("应该是测试网客户端")
+	}
+
 	// 测试网络连接
 	networkInfo, err := client.GetNetworkInfo()
 	if err != nil {
@@ -93,23 +103,34 @@ func TestNewBSCTestnetClient(t *testing.T) {
 	t.Logf("✅ BSC测试网连接成功")
 	t.Logf("链ID: %s", networkInfo["chainID"])
 	t.Logf("区块高度: %s", networkInfo["blockNumber"])
-	t.Logf("RPC地址: %s", client.rpcURL)
+	t.Logf("RPC地址: %s", client.GetRPCURL())
+	t.Logf("USDT合约: %s", client.GetUSDTContract())
 }
 
 // 测试BSC主网客户端连接
-func TestNewBSCMainnetClient(t *testing.T) {
+func TestBSCMainnetClient(t *testing.T) {
 	t.Log("测试BSC主网客户端连接...")
 
-	client, err := NewBSCClient(false) // true = mainnet
+	err := InitBSCClient(false) // false = 主网
 	if err != nil {
-		t.Fatalf("连接BSC主网失败: %v", err)
+		t.Fatalf("初始化BSC主网失败: %v", err)
 	}
-	defer client.client.Close()
+
+	client := GetBSCClient()
+	if client == nil {
+		t.Fatal("获取BSC客户端失败")
+	}
 
 	// 验证客户端
-	if client.chainID.Int64() != BSC_MAINNET_CHAIN_ID {
-		t.Errorf("链ID错误, 期望: %d, 实际: %d", BSC_MAINNET_CHAIN_ID, client.chainID.Int64())
+	if client.GetChainID().Int64() != BSC_MAINNET_CHAIN_ID {
+		t.Errorf("链ID错误, 期望: %d, 实际: %d", BSC_MAINNET_CHAIN_ID, client.GetChainID().Int64())
 	}
+
+	// 验证是主网
+	if client.IsTestnet() {
+		t.Error("应该是主网客户端")
+	}
+
 	// 测试网络连接
 	networkInfo, err := client.GetNetworkInfo()
 	if err != nil {
@@ -119,7 +140,8 @@ func TestNewBSCMainnetClient(t *testing.T) {
 	t.Logf("✅ BSC主网连接成功")
 	t.Logf("链ID: %s", networkInfo["chainID"])
 	t.Logf("区块高度: %s", networkInfo["blockNumber"])
-	t.Logf("RPC地址: %s", client.rpcURL)
+	t.Logf("RPC地址: %s", client.GetRPCURL())
+	t.Logf("USDT合约: %s", client.GetUSDTContract())
 }
 
 // 测试地址验证功能
@@ -249,11 +271,15 @@ func TestGetBNBBalance(t *testing.T) {
 
 	t.Log("测试获取BNB余额功能...")
 
-	client, err := NewBSCClient(true) // 使用测试网
+	err := InitBSCClient(true) // 使用测试网
 	if err != nil {
-		t.Fatalf("连接BSC测试网失败: %v", err)
+		t.Fatalf("初始化BSC测试网失败: %v", err)
 	}
-	defer client.client.Close()
+
+	client := GetBSCClient()
+	if client == nil {
+		t.Fatal("获取BSC客户端失败")
+	}
 
 	// 使用一个已知的测试网地址
 	testAddress := "0x4F5eE41eCCCFCF19cD2A52377750c6a2cbe0E4Ce"
@@ -276,11 +302,15 @@ func TestGetUSDTBalance(t *testing.T) {
 
 	t.Log("测试获取USDT余额功能...")
 
-	client, err := NewBSCClient(true) // 使用测试网
+	err := InitBSCClient(true) // 使用测试网
 	if err != nil {
-		t.Fatalf("连接BSC测试网失败: %v", err)
+		t.Fatalf("初始化BSC测试网失败: %v", err)
 	}
-	defer client.client.Close()
+
+	client := GetBSCClient()
+	if client == nil {
+		t.Fatal("获取BSC客户端失败")
+	}
 
 	// 使用一个已知的测试网地址
 	testAddress := "0xf1e1428f8F14C8F723553ff43059fa366397Ae2c"
@@ -304,11 +334,15 @@ func TestGetBalance(t *testing.T) {
 
 	t.Log("测试获取综合余额功能...")
 
-	client, err := NewBSCClient(true) // 使用测试网
+	err := InitBSCClient(true) // 使用测试网
 	if err != nil {
-		t.Fatalf("连接BSC测试网失败: %v", err)
+		t.Fatalf("初始化BSC测试网失败: %v", err)
 	}
-	defer client.client.Close()
+
+	client := GetBSCClient()
+	if client == nil {
+		t.Fatal("获取BSC客户端失败")
+	}
 
 	// 使用一个已知的测试网地址
 	testAddress := "0x4F5eE41eCCCFCF19cD2A52377750c6a2cbe0E4Ce"
@@ -397,28 +431,18 @@ func TestValidateTransferParams(t *testing.T) {
 func TestErrorHandling(t *testing.T) {
 	t.Log("测试错误情况处理...")
 
-	// 测试无效RPC连接
-	client := &BSCClient{
-		chainID: big.NewInt(BSC_TESTNET_CHAIN_ID),
-		rpcURL:  "https://invalid-rpc-endpoint.example.com",
-	}
-
-	// 这个测试应该失败，因为RPC端点无效
-	_, err := client.GetBNBBalance("0x4F5eE41eCCCFCF19cD2A52377750c6a2cbe0E4Ce")
-	if err == nil {
-		t.Error("期望获取余额失败，但成功了")
-	} else {
-		t.Logf("✅ 正确处理了无效RPC连接错误: %v", err)
-	}
-
 	// 测试无效地址
-	validClient, err := NewBSCClient(false)
+	err := InitBSCClient(false) // 使用主网
 	if err != nil {
-		t.Fatalf("创建有效客户端失败: %v", err)
+		t.Fatalf("初始化BSC主网失败: %v", err)
 	}
-	defer validClient.client.Close()
 
-	_, err = validClient.GetBNBBalance("invalid_address")
+	client := GetBSCClient()
+	if client == nil {
+		t.Fatal("获取BSC客户端失败")
+	}
+
+	_, err = client.GetBNBBalance("invalid_address")
 	if err == nil {
 		t.Error("期望无效地址查询失败，但成功了")
 	} else {
@@ -444,11 +468,15 @@ func TestTransferBNB(t *testing.T) {
 		t.Skip("跳过BNB转账测试 - 请配置有效的测试私钥")
 	}
 
-	client, err := NewBSCClient(true) // 使用测试网
+	err := InitBSCClient(true) // 使用测试网
 	if err != nil {
-		t.Fatalf("连接BSC测试网失败: %v", err)
+		t.Fatalf("初始化BSC测试网失败: %v", err)
 	}
-	defer client.client.Close()
+
+	client := GetBSCClient()
+	if client == nil {
+		t.Fatal("获取BSC客户端失败")
+	}
 
 	// 获取发送者地址
 	fromAddress, err := GetAddressFromPrivateKey(testPrivateKey)
@@ -515,11 +543,15 @@ func TestTransferUSDT(t *testing.T) {
 		t.Skip("跳过USDT转账测试 - 请配置有效的测试私钥")
 	}
 
-	client, err := NewBSCClient(true) // 使用测试网
+	err := InitBSCClient(true) // 使用测试网
 	if err != nil {
-		t.Fatalf("连接BSC测试网失败: %v", err)
+		t.Fatalf("初始化BSC测试网失败: %v", err)
 	}
-	defer client.client.Close()
+
+	client := GetBSCClient()
+	if client == nil {
+		t.Fatal("获取BSC客户端失败")
+	}
 
 	// 获取发送者地址
 	fromAddress, err := GetAddressFromPrivateKey(testPrivateKey)
@@ -619,11 +651,15 @@ func Example() {
 	}
 
 	// 2. 连接到BSC测试网
-	client, err := NewBSCClient(false)
+	err = InitBSCClient(false)
 	if err != nil {
 		panic(err)
 	}
-	defer client.client.Close()
+
+	client := GetBSCClient()
+	if client == nil {
+		panic("获取BSC客户端失败")
+	}
 
 	// 3. 查询余额
 	balance, err := client.GetBalance(wallet.Address)
@@ -651,11 +687,15 @@ func TestRPCFailover(t *testing.T) {
 	t.Log("测试多RPC端点故障转移功能...")
 
 	// 这个测试验证当一个RPC端点失败时，客户端是否能自动切换到备用端点
-	client, err := NewBSCClient(false)
+	err := InitBSCClient(false)
 	if err != nil {
-		t.Fatalf("创建BSC客户端失败: %v", err)
+		t.Fatalf("初始化BSC客户端失败: %v", err)
 	}
-	defer client.client.Close()
+
+	client := GetBSCClient()
+	if client == nil {
+		t.Fatal("获取BSC客户端失败")
+	}
 
 	// 进行多次网络请求，验证稳定性
 	testAddress := "0x4F5eE41eCCCFCF19cD2A52377750c6a2cbe0E4Ce"

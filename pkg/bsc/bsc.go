@@ -85,9 +85,11 @@ const ERC20_ABI = `[
 
 // BSCClient BSC客户端结构体
 type BSCClient struct {
-	client  *ethclient.Client
-	chainID *big.Int
-	rpcURL  string
+	client       *ethclient.Client
+	chainID      *big.Int
+	rpcURL       string
+	isTest       bool
+	usdtContract string
 }
 
 // WalletInfo 钱包信息
@@ -112,54 +114,40 @@ type TransferParams struct {
 	GasLimit   uint64   `json:"gas_limit,omitempty"`
 }
 
-// 单例模式相关变量
+// 全局BSC客户端实例
 var (
-	mainnetClient *BSCClient
-	testnetClient *BSCClient
-	mainnetOnce   sync.Once
-	testnetOnce   sync.Once
-	clientMutex   sync.RWMutex
+	GlobalBSCClient *BSCClient
+	clientMutex     sync.RWMutex
 )
 
-// NewBSCClient 创建新的BSC客户端（支持多RPC端点自动切换）
-// 建议使用 GetBSCClient 获取单例实例以提高性能
-func NewBSCClient(isTestnet bool) (*BSCClient, error) {
-	return newBSCClientInternal(isTestnet)
-}
+// InitBSCClient 初始化BSC客户端（系统启动时调用）
+func InitBSCClient(isTest bool) error {
+	clientMutex.Lock()
+	defer clientMutex.Unlock()
 
-// GetBSCClient 获取BSC客户端单例实例
-func GetBSCClient(isTestnet bool) (*BSCClient, error) {
-	if isTestnet {
-		testnetOnce.Do(func() {
-			client, err := newBSCClientInternal(true)
-			if err == nil {
-				testnetClient = client
-			}
-		})
-		if testnetClient == nil {
-			return newBSCClientInternal(true)
-		}
-		return testnetClient, nil
-	} else {
-		mainnetOnce.Do(func() {
-			client, err := newBSCClientInternal(false)
-			if err == nil {
-				mainnetClient = client
-			}
-		})
-		if mainnetClient == nil {
-			return newBSCClientInternal(false)
-		}
-		return mainnetClient, nil
+	client, err := newBSCClient(isTest)
+	if err != nil {
+		return fmt.Errorf("failed to initialize BSC client: %v", err)
 	}
+
+	GlobalBSCClient = client
+	return nil
 }
 
-// newBSCClientInternal 内部创建BSC客户端的方法
-func newBSCClientInternal(isTestnet bool) (*BSCClient, error) {
+// GetBSCClient 获取全局BSC客户端实例
+func GetBSCClient() *BSCClient {
+	clientMutex.RLock()
+	defer clientMutex.RUnlock()
+	return GlobalBSCClient
+}
+
+// newBSCClient 创建新的BSC客户端
+func newBSCClient(isTest bool) (*BSCClient, error) {
 	var rpcEndpoints []string
 	var expectedChainID int64
+	var usdtContract string
 
-	if isTestnet {
+	if isTest {
 		rpcEndpoints = []string{
 			BSC_TESTNET_RPC_BACKUP4, // BlastAPI
 			BSC_TESTNET_RPC_BACKUP5, // BlockPI
@@ -169,9 +157,11 @@ func newBSCClientInternal(isTestnet bool) (*BSCClient, error) {
 			BSC_TESTNET_RPC,
 		}
 		expectedChainID = BSC_TESTNET_CHAIN_ID
+		usdtContract = BSC_TESTNET_USDT_CONTRACT
 	} else {
 		rpcEndpoints = []string{BSC_MAINNET_RPC}
 		expectedChainID = BSC_MAINNET_CHAIN_ID
+		usdtContract = BSC_MAINNET_USDT_CONTRACT
 	}
 
 	for _, rpcURL := range rpcEndpoints {
@@ -197,33 +187,27 @@ func newBSCClientInternal(isTestnet bool) (*BSCClient, error) {
 		}
 
 		return &BSCClient{
-			client:  client,
-			chainID: chainID,
-			rpcURL:  rpcURL,
+			client:       client,
+			chainID:      chainID,
+			rpcURL:       rpcURL,
+			isTest:       isTest,
+			usdtContract: usdtContract,
 		}, nil
 	}
 
 	return nil, fmt.Errorf("failed to connect to any BSC RPC endpoint")
 }
 
-// ResetBSCClient 重置BSC客户端单例（用于测试或重新连接）
-func ResetBSCClient(isTestnet bool) {
+// ResetBSCClient 重置BSC客户端（用于重新连接）
+func ResetBSCClient(isTest bool) error {
 	clientMutex.Lock()
 	defer clientMutex.Unlock()
 
-	if isTestnet {
-		if testnetClient != nil {
-			testnetClient.Close()
-			testnetClient = nil
-		}
-		testnetOnce = sync.Once{}
-	} else {
-		if mainnetClient != nil {
-			mainnetClient.Close()
-			mainnetClient = nil
-		}
-		mainnetOnce = sync.Once{}
+	if GlobalBSCClient != nil {
+		GlobalBSCClient.Close()
 	}
+
+	return InitBSCClient(isTest)
 }
 
 // Close 关闭客户端连接
@@ -241,6 +225,16 @@ func (c *BSCClient) GetRPCURL() string {
 // GetChainID 获取链ID
 func (c *BSCClient) GetChainID() *big.Int {
 	return c.chainID
+}
+
+// IsTestnet 检查是否是测试网
+func (c *BSCClient) IsTestnet() bool {
+	return c.isTest
+}
+
+// GetUSDTContract 获取USDT合约地址
+func (c *BSCClient) GetUSDTContract() string {
+	return c.usdtContract
 }
 
 // ========== 1. 创建BSC钱包 ==========
@@ -315,14 +309,7 @@ func (c *BSCClient) GetBNBBalance(address string) (*big.Int, error) {
 
 // GetUSDTBalance 获取USDT余额
 func (c *BSCClient) GetUSDTBalance(address string) (*big.Int, error) {
-	var contractAddress string
-	if c.chainID.Int64() == BSC_TESTNET_CHAIN_ID {
-		contractAddress = BSC_TESTNET_USDT_CONTRACT
-	} else {
-		contractAddress = BSC_MAINNET_USDT_CONTRACT
-	}
-
-	return c.GetTokenBalance(address, contractAddress)
+	return c.GetTokenBalance(address, c.usdtContract)
 }
 
 // GetTokenBalance 获取指定代币余额
@@ -448,14 +435,7 @@ func (c *BSCClient) transferNative(params *TransferParams) (string, error) {
 
 // TransferUSDT 转账USDT
 func (c *BSCClient) TransferUSDT(params *TransferParams) (string, error) {
-	var contractAddress string
-	if c.chainID.Int64() == BSC_TESTNET_CHAIN_ID {
-		contractAddress = BSC_TESTNET_USDT_CONTRACT
-	} else {
-		contractAddress = BSC_MAINNET_USDT_CONTRACT
-	}
-
-	return c.TransferToken(params, contractAddress)
+	return c.TransferToken(params, c.usdtContract)
 }
 
 // TransferToken 转账指定代币
@@ -524,6 +504,13 @@ func (c *BSCClient) TransferToken(params *TransferParams, contractAddress string
 
 // IsValidAddress 验证地址是否有效
 func IsValidAddress(address string) bool {
+	// BSC地址必须以0x开头且长度为42
+	if !strings.HasPrefix(address, "0x") {
+		return false
+	}
+	if len(address) != 42 {
+		return false
+	}
 	return common.IsHexAddress(address)
 }
 
@@ -536,7 +523,11 @@ func WeiToEther(wei *big.Int) *big.Float {
 
 // EtherToWei 将Ether转换为Wei
 func EtherToWei(ether float64) *big.Int {
-	ethBig := big.NewFloat(ether)
+	// 使用字符串转换避免浮点数精度问题
+	etherStr := fmt.Sprintf("%.18f", ether)
+	ethBig := new(big.Float)
+	ethBig.SetString(etherStr)
+
 	weiBig := new(big.Float)
 	weiBig.SetString("1000000000000000000") // 1e18
 
@@ -614,88 +605,4 @@ func (c *BSCClient) GetNetworkInfo() (map[string]interface{}, error) {
 	}
 
 	return info, nil
-}
-
-// ========== 便利方法：使用单例客户端的全局函数 ==========
-
-// GetMainnetClient 获取主网客户端单例
-func GetMainnetClient() (*BSCClient, error) {
-	return GetBSCClient(false)
-}
-
-// GetTestnetClient 获取测试网客户端单例
-func GetTestnetClient() (*BSCClient, error) {
-	return GetBSCClient(true)
-}
-
-// GetBNBBalanceMainnet 在主网上获取BNB余额
-func GetBNBBalanceMainnet(address string) (*big.Int, error) {
-	client, err := GetMainnetClient()
-	if err != nil {
-		return nil, err
-	}
-	return client.GetBNBBalance(address)
-}
-
-// GetBNBBalanceTestnet 在测试网上获取BNB余额
-func GetBNBBalanceTestnet(address string) (*big.Int, error) {
-	client, err := GetTestnetClient()
-	if err != nil {
-		return nil, err
-	}
-	return client.GetBNBBalance(address)
-}
-
-// GetUSDTBalanceMainnet 在主网上获取USDT余额
-func GetUSDTBalanceMainnet(address string) (*big.Int, error) {
-	client, err := GetMainnetClient()
-	if err != nil {
-		return nil, err
-	}
-	return client.GetUSDTBalance(address)
-}
-
-// GetUSDTBalanceTestnet 在测试网上获取USDT余额
-func GetUSDTBalanceTestnet(address string) (*big.Int, error) {
-	client, err := GetTestnetClient()
-	if err != nil {
-		return nil, err
-	}
-	return client.GetUSDTBalance(address)
-}
-
-// TransferBNBMainnet 在主网上转账BNB
-func TransferBNBMainnet(params *TransferParams) (string, error) {
-	client, err := GetMainnetClient()
-	if err != nil {
-		return "", err
-	}
-	return client.TransferBNB(params)
-}
-
-// TransferBNBTestnet 在测试网上转账BNB
-func TransferBNBTestnet(params *TransferParams) (string, error) {
-	client, err := GetTestnetClient()
-	if err != nil {
-		return "", err
-	}
-	return client.TransferBNB(params)
-}
-
-// TransferUSDTMainnet 在主网上转账USDT
-func TransferUSDTMainnet(params *TransferParams) (string, error) {
-	client, err := GetMainnetClient()
-	if err != nil {
-		return "", err
-	}
-	return client.TransferUSDT(params)
-}
-
-// TransferUSDTTestnet 在测试网上转账USDT
-func TransferUSDTTestnet(params *TransferParams) (string, error) {
-	client, err := GetTestnetClient()
-	if err != nil {
-		return "", err
-	}
-	return client.TransferUSDT(params)
 }
