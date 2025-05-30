@@ -194,7 +194,7 @@ func TestWeiEtherConversion(t *testing.T) {
 		wei := new(big.Int)
 		wei.SetString(tc.wei, 10)
 
-		ether := WeiToEther(wei)
+		ether := WeiToNum(wei)
 		etherString := ether.Text('f', DISPLAY_PRECISION)
 		if etherString != tc.ether {
 			t.Errorf("Wei转Ether失败: %s Wei, 期望: %s ETH, 实际: %s ETH, 描述: %s",
@@ -222,7 +222,7 @@ func TestWeiEtherConversion(t *testing.T) {
 			continue
 		}
 
-		wei := EtherToWei(etherFloat)
+		wei := NumToWei(etherFloat)
 		if wei.String() != tc.wei {
 			t.Errorf("Ether转Wei失败: %s ETH, 期望: %s Wei, 实际: %s Wei, 描述: %s",
 				tc.ether, tc.wei, wei.String(), tc.desc)
@@ -253,7 +253,7 @@ func TestFormatBalance(t *testing.T) {
 		balance := new(big.Int)
 		balance.SetString(tc.balance, 10)
 
-		result := FormatBalance(balance, tc.decimals)
+		result := WeiToNumWithDecimals(balance, tc.decimals).String()
 		if result != tc.expected {
 			t.Errorf("格式化余额失败: %s (小数位%d), 期望: %s, 实际: %s, 描述: %s",
 				tc.balance, tc.decimals, tc.expected, result, tc.desc)
@@ -291,7 +291,7 @@ func TestGetBNBBalance(t *testing.T) {
 	t.Logf("✅ BNB余额查询成功")
 	t.Logf("地址: %s", testAddress)
 	t.Logf("余额: %s Wei", balance.String())
-	t.Logf("余额: %s BNB", FormatBNBBalance(balance))
+	t.Logf("余额: %s BNB", WeiToNum(balance))
 }
 
 // 测试获取USDT余额 (需要网络连接)
@@ -323,7 +323,7 @@ func TestGetUSDTBalance(t *testing.T) {
 	t.Logf("✅ USDT余额查询成功")
 	t.Logf("地址: %s", testAddress)
 	t.Logf("余额: %s", balance.String())
-	t.Logf("余额: %s USDT", FormatUSDTBalance(balance))
+	t.Logf("余额: %s USDT", WeiToNum(balance))
 }
 
 // 测试获取综合余额 (需要网络连接)
@@ -353,8 +353,8 @@ func TestGetBalance(t *testing.T) {
 	}
 	t.Logf("✅ 综合余额查询成功")
 	t.Logf("地址: %s", balanceInfo.Address)
-	t.Logf("BNB余额: %s (%s BNB)", balanceInfo.BNBBalance.String(), FormatBNBBalance(balanceInfo.BNBBalance))
-	t.Logf("USDT余额: %s (%s USDT)", balanceInfo.USDTBalance.String(), FormatUSDTBalance(balanceInfo.USDTBalance))
+	t.Logf("BNB余额: %s (%s BNB)", balanceInfo.BNBBalance.String(), WeiToNum(balanceInfo.BNBBalance))
+	t.Logf("USDT余额: %s (%s USDT)", balanceInfo.USDTBalance.String(), WeiToNum(balanceInfo.USDTBalance))
 }
 
 // 测试传输参数验证
@@ -491,10 +491,10 @@ func TestTransferBNB(t *testing.T) {
 	}
 
 	t.Logf("发送者地址: %s", fromAddress)
-	t.Logf("当前BNB余额: %s BNB", FormatBNBBalance(balance))
+	t.Logf("当前BNB余额: %s BNB", WeiToNum(balance))
 
 	// 转账金额 (0.001 BNB)
-	transferAmount := EtherToWei(0.001)
+	transferAmount := NumToWei(0.001)
 
 	// 检查余额是否足够
 	if balance.Cmp(transferAmount) < 0 {
@@ -516,7 +516,7 @@ func TestTransferBNB(t *testing.T) {
 
 	t.Logf("✅ BNB转账成功")
 	t.Logf("交易哈希: %s", txHash)
-	t.Logf("转账金额: %s BNB", FormatBNBBalance(transferAmount))
+	t.Logf("转账金额: %s BNB", WeiToNum(transferAmount))
 	t.Logf("接收地址: %s", testToAddress)
 
 	// 验证交易哈希格式
@@ -572,8 +572,8 @@ func TestTransferUSDT(t *testing.T) {
 	}
 
 	t.Logf("发送者地址: %s", fromAddress)
-	t.Logf("当前USDT余额: %s USDT", FormatUSDTBalance(usdtBalance))
-	t.Logf("当前BNB余额: %s BNB", FormatBNBBalance(bnbBalance))
+	t.Logf("当前USDT余额: %s USDT", WeiToNum(usdtBalance))
+	t.Logf("当前BNB余额: %s BNB", WeiToNum(bnbBalance))
 
 	// 转账金额 (1 USDT)
 	transferAmount := new(big.Int)
@@ -585,7 +585,7 @@ func TestTransferUSDT(t *testing.T) {
 	}
 
 	// 检查BNB余额是否足够支付gas费 (至少0.001 BNB)
-	minBNBRequired := EtherToWei(0.001)
+	minBNBRequired := NumToWei(0.001)
 	if bnbBalance.Cmp(minBNBRequired) < 0 {
 		t.Skip("跳过USDT转账测试 - BNB余额不足支付gas费")
 	}
@@ -605,7 +605,7 @@ func TestTransferUSDT(t *testing.T) {
 
 	t.Logf("✅ USDT转账成功")
 	t.Logf("交易哈希: %s", txHash)
-	t.Logf("转账金额: %s USDT", FormatUSDTBalance(transferAmount))
+	t.Logf("转账金额: %s USDT", WeiToNum(transferAmount))
 	t.Logf("接收地址: %s", testToAddress)
 
 	// 验证交易哈希格式
@@ -636,7 +636,7 @@ func BenchmarkIsValidAddress(b *testing.B) {
 func BenchmarkWeiToEther(b *testing.B) {
 	wei := big.NewInt(1000000000000000000) // 1 ETH
 	for i := 0; i < b.N; i++ {
-		WeiToEther(wei)
+		WeiToNum(wei)
 	}
 }
 
@@ -669,8 +669,8 @@ func Example() {
 
 	// 输出结果
 	println("钱包地址:", wallet.Address)
-	println("BNB余额:", FormatBNBBalance(balance.BNBBalance), "BNB")
-	println("USDT余额:", FormatUSDTBalance(balance.USDTBalance), "USDT")
+	println("BNB余额:", WeiToNum(balance.BNBBalance), "BNB")
+	println("USDT余额:", WeiToNum(balance.USDTBalance), "USDT")
 
 	// Output:
 	// 钱包地址: 0x...

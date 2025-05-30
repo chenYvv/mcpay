@@ -1,46 +1,41 @@
 package tron
 
 import (
-    "math"
-    "math/big"
+	"math/big"
 )
 
-// AmountToWei 将金额转换为最小单位
-func AmountToWei(amount float64, decimals int) *big.Int {
-    multiplier := math.Pow(10, float64(decimals))
-    bigFloat := big.NewFloat(amount * multiplier)
-    bigInt, _ := bigFloat.Int(nil)
-    return bigInt
+// 通用版本 - 支持任意小数位数
+func WeiToNumWithDecimals(wei *big.Int, decimals int) *big.Float {
+	if wei == nil {
+		return big.NewFloat(0)
+	}
+
+	divisor := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(decimals)), nil)
+	return new(big.Float).Quo(new(big.Float).SetInt(wei), new(big.Float).SetInt(divisor))
 }
 
-// WeiToAmount 将最小单位转换为金额
-func WeiToAmount(wei *big.Int, decimals int) float64 {
-    if wei.Cmp(big.NewInt(0)) == 0 {
-        return 0
-    }
-    
-    divisor := big.NewFloat(math.Pow(10, float64(decimals)))
-    result := new(big.Float).Quo(new(big.Float).SetInt(wei), divisor)
-    amount, _ := result.Float64()
-    return amount
+func NumToWeiWithDecimals(num float64, decimals int) *big.Int {
+	if num < 0 {
+		return big.NewInt(0)
+	}
+
+	numBig := big.NewFloat(num)
+
+	// 使用更精确的方法
+	multiplier := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(decimals)), nil)
+	multiplierFloat := new(big.Float).SetInt(multiplier)
+
+	result := new(big.Float).Mul(numBig, multiplierFloat)
+	wei, _ := result.Int(nil)
+	return wei
 }
 
-// USDTToWei 将 USDT 金额转换为 Wei
-func USDTToWei(amount float64) *big.Int {
-    return AmountToWei(amount, USDTDecimals)
+// NumToWei 将金额转换为最小单位
+func NumToWei(num float64) *big.Int {
+	return NumToWeiWithDecimals(num, COMMON_DECIMALS)
 }
 
-// WeiToUSDT 将 Wei 转换为 USDT 金额
-func WeiToUSDT(wei *big.Int) float64 {
-    return WeiToAmount(wei, USDTDecimals)
-}
-
-// TRXToWei 将 TRX 金额转换为 Wei
-func TRXToWei(amount float64) *big.Int {
-    return AmountToWei(amount, TRXDecimals)
-}
-
-// WeiToTRX 将 Wei 转换为 TRX 金额
-func WeiToTRX(wei *big.Int) float64 {
-    return WeiToAmount(wei, TRXDecimals)
+// WeiToNum 将最小单位转换为金额
+func WeiToNum(wei *big.Int) *big.Float {
+	return WeiToNumWithDecimals(wei, COMMON_DECIMALS)
 }

@@ -28,8 +28,9 @@ const (
 	DefaultFeeLimit   = 100000000 // 100 TRX
 	DefaultMaxRetries = 3
 
-	TRXDecimals  = 6
-	USDTDecimals = 6
+	COMMON_DECIMALS = 6
+	TRXDecimals     = 6
+	USDTDecimals    = 6
 )
 
 // 错误定义

@@ -48,8 +48,9 @@ const (
 	DEFAULT_GAS_PRICE = 5000000000 // 5 Gwei
 
 	// 代币小数位数配置
-	BNB_DECIMALS  = 18 // BNB使用18位小数
-	USDT_DECIMALS = 18 // BSC上的USDT使用18位小数
+	COMMON_DECIMALS = 18
+	BNB_DECIMALS    = 18 // BNB使用18位小数
+	USDT_DECIMALS   = 18 // BSC上的USDT使用18位小数
 
 	// 显示精度配置
 	DISPLAY_PRECISION = 6 // 余额显示时的小数精度
@@ -529,49 +530,40 @@ func IsValidAddress(address string) bool {
 	return common.IsHexAddress(address)
 }
 
-// WeiToEther 将Wei转换为Ether
-func WeiToEther(wei *big.Int) *big.Float {
-	ether := new(big.Float)
-	ether.SetString("1000000000000000000") // 1e18
-	return new(big.Float).Quo(new(big.Float).SetInt(wei), ether)
-}
-
-// EtherToWei 将Ether转换为Wei
-func EtherToWei(ether float64) *big.Int {
-	// 使用字符串转换避免浮点数精度问题
-	etherStr := fmt.Sprintf("%.18f", ether)
-	ethBig := new(big.Float)
-	ethBig.SetString(etherStr)
-
-	weiBig := new(big.Float)
-	weiBig.SetString("1000000000000000000") // 1e18
-
-	result := new(big.Float).Mul(ethBig, weiBig)
-	wei := new(big.Int)
-	result.Int(wei)
-	return wei
-}
-
-// FormatBalance 格式化余额显示
-func FormatBalance(balance *big.Int, decimals int) string {
-	if balance == nil {
-		return "0"
+// 通用版本 - 支持任意小数位数
+func WeiToNumWithDecimals(wei *big.Int, decimals int) *big.Float {
+	if wei == nil {
+		return big.NewFloat(0)
 	}
 
 	divisor := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(decimals)), nil)
-	quotient := new(big.Float).Quo(new(big.Float).SetInt(balance), new(big.Float).SetInt(divisor))
-
-	return quotient.Text('f', DISPLAY_PRECISION)
+	return new(big.Float).Quo(new(big.Float).SetInt(wei), new(big.Float).SetInt(divisor))
 }
 
-// FormatBNBBalance 格式化BNB余额显示
-func FormatBNBBalance(balance *big.Int) string {
-	return FormatBalance(balance, BNB_DECIMALS)
+func NumToWeiWithDecimals(num float64, decimals int) *big.Int {
+	if num < 0 {
+		return big.NewInt(0)
+	}
+
+	numBig := big.NewFloat(num)
+
+	// 使用更精确的方法
+	multiplier := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(decimals)), nil)
+	multiplierFloat := new(big.Float).SetInt(multiplier)
+
+	result := new(big.Float).Mul(numBig, multiplierFloat)
+	wei, _ := result.Int(nil)
+	return wei
 }
 
-// FormatUSDTBalance 格式化USDT余额显示
-func FormatUSDTBalance(balance *big.Int) string {
-	return FormatBalance(balance, USDT_DECIMALS)
+// NumToWei 将金额转换为最小单位
+func NumToWei(num float64) *big.Int {
+	return NumToWeiWithDecimals(num, COMMON_DECIMALS)
+}
+
+// WeiToNum 将最小单位转换为金额
+func WeiToNum(wei *big.Int) *big.Float {
+	return WeiToNumWithDecimals(wei, COMMON_DECIMALS)
 }
 
 // validateTransferParams 验证转账参数
