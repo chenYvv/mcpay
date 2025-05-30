@@ -21,7 +21,14 @@ import (
 // BSC网络配置
 const (
 	// BSC主网
-	BSC_MAINNET_RPC           = "https://bsc-dataseed1.binance.org/"
+	//BSC_MAINNET_RPC           = "https://bsc-dataseed1.binance.org/"
+	BSC_MAINNET_RPC           = "https://bsc-dataseed.bnbchain.org/"
+	BSC_MAINNET_RPC_BACKUP1   = "https://bsc-dataseed.nariox.org/"
+	BSC_MAINNET_RPC_BACKUP2   = "https://bsc-dataseed.defibit.io/"
+	BSC_MAINNET_RPC_BACKUP3   = "https://bsc-dataseed.ninicoin.io/"
+	BSC_MAINNET_RPC_BACKUP4   = "https://bsc.nodereal.io/"
+	BSC_MAINNET_RPC_BACKUP5   = "https://bsc-dataseed-public.bnbchain.org/"
+	BSC_MAINNET_RPC_BACKUP6   = "https://bnb.rpc.subquery.network/public"
 	BSC_MAINNET_CHAIN_ID      = 56
 	BSC_MAINNET_USDT_CONTRACT = "0x55d398326f99059ff775485246999027b3197955"
 
@@ -159,7 +166,15 @@ func newBSCClient(isTest bool) (*BSCClient, error) {
 		expectedChainID = BSC_TESTNET_CHAIN_ID
 		usdtContract = BSC_TESTNET_USDT_CONTRACT
 	} else {
-		rpcEndpoints = []string{BSC_MAINNET_RPC}
+		rpcEndpoints = []string{
+			BSC_MAINNET_RPC,
+			BSC_MAINNET_RPC_BACKUP1,
+			BSC_MAINNET_RPC_BACKUP2,
+			BSC_MAINNET_RPC_BACKUP3,
+			BSC_MAINNET_RPC_BACKUP4,
+			BSC_MAINNET_RPC_BACKUP5,
+			BSC_MAINNET_RPC_BACKUP6,
+		}
 		expectedChainID = BSC_MAINNET_CHAIN_ID
 		usdtContract = BSC_MAINNET_USDT_CONTRACT
 	}
