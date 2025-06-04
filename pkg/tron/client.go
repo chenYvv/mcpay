@@ -25,7 +25,7 @@ const (
 	TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf
 
 	DefaultTimeout    = 30 * time.Second
-	DefaultFeeLimit   = 100000000 // 100 TRX
+	DefaultFeeLimit   = 15000000 // 15 TRX
 	DefaultMaxRetries = 3
 
 	COMMON_DECIMALS = 6
@@ -47,9 +47,18 @@ var (
 type Config struct {
 	Node            string        `yaml:"node" json:"node"`
 	Timeout         time.Duration `yaml:"timeout" json:"timeout"`
-	USDTContract    string        `yaml:"usdt_contract" json:"usdt_contract"`
 	DefaultFeeLimit int64         `yaml:"default_fee_limit" json:"default_fee_limit"`
 	MaxRetries      int           `yaml:"max_retries" json:"max_retries"`
+}
+
+// 根据配置获取 USDT 合约地址
+func (c *Config) GetUSDTContract() string {
+	if c.Node == MainNetNode {
+		return MainNetUSDTContract
+	} else if c.Node == NileTestNetNode {
+		return NileTestNetUSDTContract
+	}
+	return ""
 }
 
 // DefaultConfig 返回默认配置
@@ -57,7 +66,6 @@ func DefaultConfig() *Config {
 	return &Config{
 		Node:            MainNetNode,
 		Timeout:         DefaultTimeout,
-		USDTContract:    MainNetUSDTContract,
 		DefaultFeeLimit: DefaultFeeLimit,
 		MaxRetries:      DefaultMaxRetries,
 	}
@@ -68,7 +76,6 @@ func TestNetConfig() *Config {
 	return &Config{
 		Node:            NileTestNetNode,
 		Timeout:         DefaultTimeout,
-		USDTContract:    NileTestNetUSDTContract,
 		DefaultFeeLimit: DefaultFeeLimit,
 		MaxRetries:      DefaultMaxRetries,
 	}
@@ -76,15 +83,42 @@ func TestNetConfig() *Config {
 
 // Client Tron 客户端
 type Client struct {
+	isTest bool // 是否为测试网
 	config *Config
 	grpc   *client.GrpcClient
 	mu     sync.RWMutex
 }
 
-// NewClient 创建新的 Tron 客户端
-func NewClient(config *Config) (*Client, error) {
-	if config == nil {
-		config = DefaultConfig()
+// 全局客户端实例
+var (
+	GlobalTronClient *Client
+	once             sync.Once
+)
+
+// InitTronClient 初始化客户端（系统启动时调用）
+func InitTronClient(isTest bool) error {
+	var initErr error
+	once.Do(func() {
+		client, err := newClient(isTest)
+		if err != nil {
+			initErr = err
+			return
+		}
+		GlobalTronClient = client
+	})
+	return initErr
+}
+
+// GetClient 获取全局客户端实例
+func GetClient() *Client {
+	return GlobalTronClient
+}
+
+// newClient 创建新的 Tron 客户端
+func newClient(isTest bool) (*Client, error) {
+	config := DefaultConfig()
+	if isTest {
+		config = TestNetConfig()
 	}
 
 	c := &Client{

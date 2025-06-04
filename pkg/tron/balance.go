@@ -66,7 +66,7 @@ func (c *Client) GetTRC20Balance(ctx context.Context, address, contract string) 
 
 // GetUSDTBalance 获取 USDT 余额
 func (c *Client) GetUSDTBalance(ctx context.Context, address string) (*big.Int, error) {
-	return c.GetTRC20Balance(ctx, address, c.config.USDTContract)
+	return c.GetTRC20Balance(ctx, address, c.config.GetUSDTContract())
 }
 
 // GetFullBalance 获取完整余额信息

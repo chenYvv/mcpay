@@ -17,11 +17,11 @@ import (
 
 // TransferRequest 转账请求
 type TransferRequest struct {
-	From       string   `json:"from"`
-	To         string   `json:"to"`
-	Amount     *big.Int `json:"amount"`
-	PrivateKey string   `json:"private_key,omitempty"`
-	FeeLimit   int64    `json:"fee_limit,omitempty"`
+	From       string  `json:"from"`
+	To         string  `json:"to"`
+	Amount     float64 `json:"amount"`
+	PrivateKey string  `json:"private_key,omitempty"`
+	FeeLimit   int64   `json:"fee_limit,omitempty"`
 }
 
 // TransferResult 转账结果
@@ -34,6 +34,9 @@ type TransferResult struct {
 
 // TransferTRX 转账 TRX
 func (c *Client) TransferTRX(ctx context.Context, req *TransferRequest) (*TransferResult, error) {
+
+	amountWei := NumToWei(req.Amount)
+
 	if err := c.validateTransferRequest(req); err != nil {
 		return nil, err
 	}
@@ -44,14 +47,14 @@ func (c *Client) TransferTRX(ctx context.Context, req *TransferRequest) (*Transf
 		return nil, err
 	}
 
-	if balance.Cmp(req.Amount) < 0 {
+	if balance.Cmp(amountWei) < 0 {
 		return nil, ErrInsufficientBalance
 	}
 
 	var tx *api.TransactionExtention
 	err = c.withRetry(ctx, func() error {
 		var err error
-		tx, err = c.grpc.Transfer(req.From, req.To, req.Amount.Int64())
+		tx, err = c.grpc.Transfer(req.From, req.To, amountWei.Int64())
 		return err
 	})
 
@@ -74,6 +77,9 @@ func (c *Client) TransferTRX(ctx context.Context, req *TransferRequest) (*Transf
 
 // TransferTRC20 转账 TRC20 代币
 func (c *Client) TransferTRC20(ctx context.Context, req *TransferRequest, contract string) (*TransferResult, error) {
+
+	amountWei := NumToWei(req.Amount)
+
 	if err := c.validateTransferRequest(req); err != nil {
 		return nil, err
 	}
@@ -88,7 +94,7 @@ func (c *Client) TransferTRC20(ctx context.Context, req *TransferRequest, contra
 		return nil, err
 	}
 
-	if balance.Cmp(req.Amount) < 0 {
+	if balance.Cmp(amountWei) < 0 {
 		return nil, ErrInsufficientBalance
 	}
 
@@ -98,9 +104,9 @@ func (c *Client) TransferTRC20(ctx context.Context, req *TransferRequest, contra
 		return nil, err
 	}
 
-	minTrxForFee := big.NewInt(10000000) // 10 TRX
-	if trxBalance.Cmp(minTrxForFee) < 0 {
-		return nil, fmt.Errorf("insufficient TRX for transaction fee, need at least 10 TRX")
+	if trxBalance.Cmp(big.NewInt(1000000)) < 0 { // 最少 1 TRX
+		return nil, fmt.Errorf("insufficient TRX for transaction fee, current balance: %g TRX",
+			WeiToNumWithDecimals(trxBalance, 6))
 	}
 
 	feeLimit := req.FeeLimit
@@ -111,7 +117,7 @@ func (c *Client) TransferTRC20(ctx context.Context, req *TransferRequest, contra
 	var tx *api.TransactionExtention
 	err = c.withRetry(ctx, func() error {
 		var err error
-		tx, err = c.grpc.TRC20Send(req.From, req.To, contract, req.Amount, feeLimit)
+		tx, err = c.grpc.TRC20Send(req.From, req.To, contract, amountWei, feeLimit)
 		return err
 	})
 
@@ -134,7 +140,7 @@ func (c *Client) TransferTRC20(ctx context.Context, req *TransferRequest, contra
 
 // TransferUSDT 转账 USDT
 func (c *Client) TransferUSDT(ctx context.Context, req *TransferRequest) (*TransferResult, error) {
-	return c.TransferTRC20(ctx, req, c.config.USDTContract)
+	return c.TransferTRC20(ctx, req, c.config.GetUSDTContract())
 }
 
 // signAndBroadcast 签名并广播交易
@@ -221,6 +227,7 @@ func (c *Client) BroadcastTransaction(transaction *core.Transaction) error {
 
 // validateTransferRequest 验证转账请求
 func (c *Client) validateTransferRequest(req *TransferRequest) error {
+	amountWei := NumToWei(req.Amount)
 	if req == nil {
 		return fmt.Errorf("transfer request is nil")
 	}
@@ -233,7 +240,7 @@ func (c *Client) validateTransferRequest(req *TransferRequest) error {
 		return fmt.Errorf("invalid to address: %s", req.To)
 	}
 
-	if req.Amount == nil || req.Amount.Cmp(big.NewInt(0)) <= 0 {
+	if amountWei == nil || amountWei.Cmp(big.NewInt(0)) <= 0 {
 		return fmt.Errorf("invalid amount: %v", req.Amount)
 	}
 

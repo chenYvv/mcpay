@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"math/big"
 	"strings"
 	"time"
@@ -298,14 +297,6 @@ func TronTRX2Num(wei *big.Int) float64 {
 	float := new(big.Float).Quo(new(big.Float).SetInt(wei), new(big.Float).SetInt64(int64(1e6)))
 	num, _ := float.Float64()
 	return num
-}
-
-func Num2Wei(amount, y float64) *big.Int {
-	// 将USDT数量乘以10^6，以将小数点精度移动到整数部分
-	usdtBigInt := big.NewFloat(amount * math.Pow(10, y))
-	// 将结果转换为bigint类型
-	bigInt, _ := usdtBigInt.Int(nil)
-	return bigInt
 }
 
 func (c *TronClient) SignTransaction(transaction *core.Transaction, privateKey string) (*core.Transaction, error) {

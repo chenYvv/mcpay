@@ -79,7 +79,7 @@ func TestBSCTestnetClient(t *testing.T) {
 		t.Fatalf("初始化BSC测试网失败: %v", err)
 	}
 
-	client := GetBSCClient()
+	client := GetClient()
 	if client == nil {
 		t.Fatal("获取BSC客户端失败")
 	}
@@ -116,7 +116,7 @@ func TestBSCMainnetClient(t *testing.T) {
 		t.Fatalf("初始化BSC主网失败: %v", err)
 	}
 
-	client := GetBSCClient()
+	client := GetClient()
 	if client == nil {
 		t.Fatal("获取BSC客户端失败")
 	}
@@ -194,7 +194,8 @@ func TestWeiEtherConversion(t *testing.T) {
 		wei := new(big.Int)
 		wei.SetString(tc.wei, 10)
 
-		ether := WeiToNum(wei)
+		ether := WeiToNumWithDecimals(wei, COMMON_DECIMALS)
+		//ether := WeiToNum(wei)
 		etherString := ether.Text('f', DISPLAY_PRECISION)
 		if etherString != tc.ether {
 			t.Errorf("Wei转Ether失败: %s Wei, 期望: %s ETH, 实际: %s ETH, 描述: %s",
@@ -242,11 +243,11 @@ func TestFormatBalance(t *testing.T) {
 		expected string
 		desc     string
 	}{
-		{"1000000000000000000", 18, "1.000000", "1 BNB (18位小数)"},
-		{"1000000", 6, "1.000000", "1 USDT (6位小数)"},
-		{"500000000000000000", 18, "0.500000", "0.5 BNB"},
+		{"1000000000000000000", 18, "1", "1 BNB (18位小数)"},
+		{"1000000", 6, "1", "1 USDT (6位小数)"},
+		{"500000000000000000", 18, "0.5", "0.5 BNB"},
 		{"123456", 6, "0.123456", "0.123456 USDT"},
-		{"0", 18, "0.000000", "0余额"},
+		{"0", 18, "0", "0余额"},
 	}
 
 	for _, tc := range testCases {
@@ -276,7 +277,7 @@ func TestGetBNBBalance(t *testing.T) {
 		t.Fatalf("初始化BSC测试网失败: %v", err)
 	}
 
-	client := GetBSCClient()
+	client := GetClient()
 	if client == nil {
 		t.Fatal("获取BSC客户端失败")
 	}
@@ -291,7 +292,7 @@ func TestGetBNBBalance(t *testing.T) {
 	t.Logf("✅ BNB余额查询成功")
 	t.Logf("地址: %s", testAddress)
 	t.Logf("余额: %s Wei", balance.String())
-	t.Logf("余额: %s BNB", WeiToNum(balance))
+	t.Logf("余额: %f BNB", WeiToNum(balance))
 }
 
 // 测试获取USDT余额 (需要网络连接)
@@ -307,7 +308,7 @@ func TestGetUSDTBalance(t *testing.T) {
 		t.Fatalf("初始化BSC测试网失败: %v", err)
 	}
 
-	client := GetBSCClient()
+	client := GetClient()
 	if client == nil {
 		t.Fatal("获取BSC客户端失败")
 	}
@@ -323,7 +324,7 @@ func TestGetUSDTBalance(t *testing.T) {
 	t.Logf("✅ USDT余额查询成功")
 	t.Logf("地址: %s", testAddress)
 	t.Logf("余额: %s", balance.String())
-	t.Logf("余额: %s USDT", WeiToNum(balance))
+	t.Logf("余额: %f USDT", WeiToNum(balance))
 }
 
 // 测试获取综合余额 (需要网络连接)
@@ -339,7 +340,7 @@ func TestGetBalance(t *testing.T) {
 		t.Fatalf("初始化BSC测试网失败: %v", err)
 	}
 
-	client := GetBSCClient()
+	client := GetClient()
 	if client == nil {
 		t.Fatal("获取BSC客户端失败")
 	}
@@ -353,8 +354,8 @@ func TestGetBalance(t *testing.T) {
 	}
 	t.Logf("✅ 综合余额查询成功")
 	t.Logf("地址: %s", balanceInfo.Address)
-	t.Logf("BNB余额: %s (%s BNB)", balanceInfo.BNBBalance.String(), WeiToNum(balanceInfo.BNBBalance))
-	t.Logf("USDT余额: %s (%s USDT)", balanceInfo.USDTBalance.String(), WeiToNum(balanceInfo.USDTBalance))
+	t.Logf("BNB余额: %s (%f BNB)", balanceInfo.BNBBalance.String(), WeiToNum(balanceInfo.BNBBalance))
+	t.Logf("USDT余额: %s (%f USDT)", balanceInfo.USDTBalance.String(), WeiToNum(balanceInfo.USDTBalance))
 }
 
 // 测试传输参数验证
@@ -370,7 +371,7 @@ func TestValidateTransferParams(t *testing.T) {
 			TransferParams{
 				PrivateKey: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
 				ToAddress:  "0x4F5eE41eCCCFCF19cD2A52377750c6a2cbe0E4Ce",
-				Amount:     big.NewInt(1000000000000000000), // 1 ETH
+				Amount:     1, // 1 ETH
 			},
 			true,
 			"有效参数",
@@ -379,7 +380,7 @@ func TestValidateTransferParams(t *testing.T) {
 			TransferParams{
 				PrivateKey: "", // 空私钥
 				ToAddress:  "0x4F5eE41eCCCFCF19cD2A52377750c6a2cbe0E4Ce",
-				Amount:     big.NewInt(1000000000000000000),
+				Amount:     1,
 			},
 			false,
 			"空私钥",
@@ -388,7 +389,7 @@ func TestValidateTransferParams(t *testing.T) {
 			TransferParams{
 				PrivateKey: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
 				ToAddress:  "invalid_address", // 无效地址
-				Amount:     big.NewInt(1000000000000000000),
+				Amount:     1,
 			},
 			false,
 			"无效接收地址",
@@ -397,7 +398,7 @@ func TestValidateTransferParams(t *testing.T) {
 			TransferParams{
 				PrivateKey: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
 				ToAddress:  "0x4F5eE41eCCCFCF19cD2A52377750c6a2cbe0E4Ce",
-				Amount:     big.NewInt(0), // 零金额
+				Amount:     0, // 零金额
 			},
 			false,
 			"零金额",
@@ -406,7 +407,7 @@ func TestValidateTransferParams(t *testing.T) {
 			TransferParams{
 				PrivateKey: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
 				ToAddress:  "0x4F5eE41eCCCFCF19cD2A52377750c6a2cbe0E4Ce",
-				Amount:     big.NewInt(-1), // 负金额
+				Amount:     -1, // 负金额
 			},
 			false,
 			"负金额",
@@ -437,7 +438,7 @@ func TestErrorHandling(t *testing.T) {
 		t.Fatalf("初始化BSC主网失败: %v", err)
 	}
 
-	client := GetBSCClient()
+	client := GetClient()
 	if client == nil {
 		t.Fatal("获取BSC客户端失败")
 	}
@@ -473,7 +474,7 @@ func TestTransferBNB(t *testing.T) {
 		t.Fatalf("初始化BSC测试网失败: %v", err)
 	}
 
-	client := GetBSCClient()
+	client := GetClient()
 	if client == nil {
 		t.Fatal("获取BSC客户端失败")
 	}
@@ -491,13 +492,13 @@ func TestTransferBNB(t *testing.T) {
 	}
 
 	t.Logf("发送者地址: %s", fromAddress)
-	t.Logf("当前BNB余额: %s BNB", WeiToNum(balance))
+	t.Logf("当前BNB余额: %f BNB", WeiToNum(balance))
 
 	// 转账金额 (0.001 BNB)
-	transferAmount := NumToWei(0.001)
+	transferAmount := 0.001
 
 	// 检查余额是否足够
-	if balance.Cmp(transferAmount) < 0 {
+	if balance.Cmp(NumToWei(transferAmount)) < 0 {
 		t.Skip("跳过BNB转账测试 - 余额不足")
 	}
 
@@ -516,7 +517,7 @@ func TestTransferBNB(t *testing.T) {
 
 	t.Logf("✅ BNB转账成功")
 	t.Logf("交易哈希: %s", txHash)
-	t.Logf("转账金额: %s BNB", WeiToNum(transferAmount))
+	t.Logf("转账金额: %f BNB", transferAmount)
 	t.Logf("接收地址: %s", testToAddress)
 
 	// 验证交易哈希格式
@@ -548,7 +549,7 @@ func TestTransferUSDT(t *testing.T) {
 		t.Fatalf("初始化BSC测试网失败: %v", err)
 	}
 
-	client := GetBSCClient()
+	client := GetClient()
 	if client == nil {
 		t.Fatal("获取BSC客户端失败")
 	}
@@ -572,15 +573,14 @@ func TestTransferUSDT(t *testing.T) {
 	}
 
 	t.Logf("发送者地址: %s", fromAddress)
-	t.Logf("当前USDT余额: %s USDT", WeiToNum(usdtBalance))
-	t.Logf("当前BNB余额: %s BNB", WeiToNum(bnbBalance))
+	t.Logf("当前USDT余额: %f USDT", WeiToNum(usdtBalance))
+	t.Logf("当前BNB余额: %f BNB", WeiToNum(bnbBalance))
 
 	// 转账金额 (1 USDT)
-	transferAmount := new(big.Int)
-	transferAmount.SetString("1000000000000000000", 10) // 1 USDT (18位小数)
+	transferAmount := 1.0
 
 	// 检查USDT余额是否足够
-	if usdtBalance.Cmp(transferAmount) < 0 {
+	if usdtBalance.Cmp(NumToWei(transferAmount)) < 0 {
 		t.Skip("跳过USDT转账测试 - USDT余额不足")
 	}
 
@@ -594,7 +594,7 @@ func TestTransferUSDT(t *testing.T) {
 	params := &TransferParams{
 		PrivateKey: testPrivateKey,
 		ToAddress:  testToAddress,
-		Amount:     transferAmount,
+		Amount:     1,
 	}
 
 	// 执行转账
@@ -605,7 +605,7 @@ func TestTransferUSDT(t *testing.T) {
 
 	t.Logf("✅ USDT转账成功")
 	t.Logf("交易哈希: %s", txHash)
-	t.Logf("转账金额: %s USDT", WeiToNum(transferAmount))
+	t.Logf("转账金额: %f USDT", transferAmount)
 	t.Logf("接收地址: %s", testToAddress)
 
 	// 验证交易哈希格式
@@ -656,7 +656,7 @@ func Example() {
 		panic(err)
 	}
 
-	client := GetBSCClient()
+	client := GetClient()
 	if client == nil {
 		panic("获取BSC客户端失败")
 	}
@@ -692,7 +692,7 @@ func TestRPCFailover(t *testing.T) {
 		t.Fatalf("初始化BSC客户端失败: %v", err)
 	}
 
-	client := GetBSCClient()
+	client := GetClient()
 	if client == nil {
 		t.Fatal("获取BSC客户端失败")
 	}

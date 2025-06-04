@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/shopspring/decimal"
 )
 
 // BSC网络配置
@@ -93,11 +94,10 @@ const ERC20_ABI = `[
 
 // BSCClient BSC客户端结构体
 type BSCClient struct {
-	client       *ethclient.Client
-	chainID      *big.Int
-	rpcURL       string
-	isTest       bool
-	usdtContract string
+	client  *ethclient.Client
+	chainID *big.Int
+	rpcURL  string
+	isTest  bool
 }
 
 // WalletInfo 钱包信息
@@ -117,43 +117,40 @@ type BalanceInfo struct {
 type TransferParams struct {
 	PrivateKey string   `json:"private_key"`
 	ToAddress  string   `json:"to_address"`
-	Amount     *big.Int `json:"amount"`
+	Amount     float64  `json:"amount"`
 	GasPrice   *big.Int `json:"gas_price,omitempty"`
 	GasLimit   uint64   `json:"gas_limit,omitempty"`
 }
 
 // 全局BSC客户端实例
 var (
-	GlobalBSCClient *BSCClient
-	clientMutex     sync.RWMutex
+	Client *BSCClient
+	once   sync.Once
 )
 
 // InitBSCClient 初始化BSC客户端（系统启动时调用）
 func InitBSCClient(isTest bool) error {
-	clientMutex.Lock()
-	defer clientMutex.Unlock()
-
-	client, err := newBSCClient(isTest)
-	if err != nil {
-		return fmt.Errorf("failed to initialize BSC client: %v", err)
-	}
-
-	GlobalBSCClient = client
-	return nil
+	var initErr error
+	once.Do(func() {
+		client, err := newBSCClient(isTest)
+		if err != nil {
+			initErr = err
+			return
+		}
+		Client = client
+	})
+	return initErr
 }
 
-// GetBSCClient 获取全局BSC客户端实例
-func GetBSCClient() *BSCClient {
-	clientMutex.RLock()
-	defer clientMutex.RUnlock()
-	return GlobalBSCClient
+// GetClient 获取全局BSC客户端实例
+func GetClient() *BSCClient {
+	return Client
 }
 
 // newBSCClient 创建新的BSC客户端
 func newBSCClient(isTest bool) (*BSCClient, error) {
 	var rpcEndpoints []string
 	var expectedChainID int64
-	var usdtContract string
 
 	if isTest {
 		rpcEndpoints = []string{
@@ -165,7 +162,6 @@ func newBSCClient(isTest bool) (*BSCClient, error) {
 			BSC_TESTNET_RPC,
 		}
 		expectedChainID = BSC_TESTNET_CHAIN_ID
-		usdtContract = BSC_TESTNET_USDT_CONTRACT
 	} else {
 		rpcEndpoints = []string{
 			BSC_MAINNET_RPC,
@@ -177,7 +173,6 @@ func newBSCClient(isTest bool) (*BSCClient, error) {
 			BSC_MAINNET_RPC_BACKUP6,
 		}
 		expectedChainID = BSC_MAINNET_CHAIN_ID
-		usdtContract = BSC_MAINNET_USDT_CONTRACT
 	}
 
 	for _, rpcURL := range rpcEndpoints {
@@ -203,11 +198,10 @@ func newBSCClient(isTest bool) (*BSCClient, error) {
 		}
 
 		return &BSCClient{
-			client:       client,
-			chainID:      chainID,
-			rpcURL:       rpcURL,
-			isTest:       isTest,
-			usdtContract: usdtContract,
+			client:  client,
+			chainID: chainID,
+			rpcURL:  rpcURL,
+			isTest:  isTest,
 		}, nil
 	}
 
@@ -216,11 +210,8 @@ func newBSCClient(isTest bool) (*BSCClient, error) {
 
 // ResetBSCClient 重置BSC客户端（用于重新连接）
 func ResetBSCClient(isTest bool) error {
-	clientMutex.Lock()
-	defer clientMutex.Unlock()
-
-	if GlobalBSCClient != nil {
-		GlobalBSCClient.Close()
+	if Client != nil {
+		Client.Close()
 	}
 
 	return InitBSCClient(isTest)
@@ -250,7 +241,11 @@ func (c *BSCClient) IsTestnet() bool {
 
 // GetUSDTContract 获取USDT合约地址
 func (c *BSCClient) GetUSDTContract() string {
-	return c.usdtContract
+	if c.isTest {
+		return BSC_TESTNET_USDT_CONTRACT
+	} else {
+		return BSC_MAINNET_USDT_CONTRACT
+	}
 }
 
 // ========== 1. 创建BSC钱包 ==========
@@ -325,7 +320,7 @@ func (c *BSCClient) GetBNBBalance(address string) (*big.Int, error) {
 
 // GetUSDTBalance 获取USDT余额
 func (c *BSCClient) GetUSDTBalance(address string) (*big.Int, error) {
-	return c.GetTokenBalance(address, c.usdtContract)
+	return c.GetTokenBalance(address, c.GetUSDTContract())
 }
 
 // GetTokenBalance 获取指定代币余额
@@ -426,7 +421,7 @@ func (c *BSCClient) transferNative(params *TransferParams) (string, error) {
 	tx := types.NewTransaction(
 		nonce,
 		common.HexToAddress(params.ToAddress),
-		params.Amount,
+		NumToWei(params.Amount),
 		gasLimit,
 		gasPrice,
 		nil,
@@ -451,7 +446,7 @@ func (c *BSCClient) transferNative(params *TransferParams) (string, error) {
 
 // TransferUSDT 转账USDT
 func (c *BSCClient) TransferUSDT(params *TransferParams) (string, error) {
-	return c.TransferToken(params, c.usdtContract)
+	return c.TransferToken(params, c.GetUSDTContract())
 }
 
 // TransferToken 转账指定代币
@@ -536,8 +531,23 @@ func WeiToNumWithDecimals(wei *big.Int, decimals int) *big.Float {
 		return big.NewFloat(0)
 	}
 
-	divisor := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(decimals)), nil)
-	return new(big.Float).Quo(new(big.Float).SetInt(wei), new(big.Float).SetInt(divisor))
+	// 使用 decimal 库处理，提高精度
+	d := decimal.NewFromBigInt(wei, 0)
+
+	// 计算除数 10^decimals
+	divisor := decimal.New(1, int32(decimals))
+
+	// 执行除法运算
+	result := d.Div(divisor)
+
+	// 转换回 *big.Float
+	// 使用字符串作为中介，保持最高精度
+	resultStr := result.String()
+	resultBigFloat := new(big.Float)
+	resultBigFloat.SetPrec(256) // 设置高精度
+	resultBigFloat.SetString(resultStr)
+
+	return resultBigFloat
 }
 
 func NumToWeiWithDecimals(num float64, decimals int) *big.Int {
@@ -545,16 +555,20 @@ func NumToWeiWithDecimals(num float64, decimals int) *big.Int {
 		return big.NewInt(0)
 	}
 
-	numBig := big.NewFloat(num)
+	// 使用 decimal 库处理精度问题
+	d := decimal.NewFromFloat(num)
 
-	// 使用更精确的方法
-	multiplier := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(decimals)), nil)
-	multiplierFloat := new(big.Float).SetInt(multiplier)
+	// 计算10^decimals
+	multiplier := decimal.New(1, int32(decimals)) // 等于 10^decimals
 
-	result := new(big.Float).Mul(numBig, multiplierFloat)
-	wei, _ := result.Int(nil)
-	return wei
+	// 相乘
+	result := d.Mul(multiplier)
+
+	// 转换为 big.Int
+	return result.BigInt()
 }
+
+// ...existing code...
 
 // NumToWei 将金额转换为最小单位
 func NumToWei(num float64) *big.Int {
@@ -562,12 +576,16 @@ func NumToWei(num float64) *big.Int {
 }
 
 // WeiToNum 将最小单位转换为金额
-func WeiToNum(wei *big.Int) *big.Float {
-	return WeiToNumWithDecimals(wei, COMMON_DECIMALS)
+func WeiToNum(wei *big.Int) float64 {
+	// 转换为float64
+	floatResult, _ := WeiToNumWithDecimals(wei, COMMON_DECIMALS).Float64()
+	return floatResult
 }
 
 // validateTransferParams 验证转账参数
 func (c *BSCClient) validateTransferParams(params *TransferParams) error {
+	amountWei := NumToWei(params.Amount)
+
 	if params == nil {
 		return fmt.Errorf("transfer params cannot be nil")
 	}
@@ -580,7 +598,7 @@ func (c *BSCClient) validateTransferParams(params *TransferParams) error {
 		return fmt.Errorf("invalid to address: %s", params.ToAddress)
 	}
 
-	if params.Amount == nil || params.Amount.Sign() <= 0 {
+	if amountWei == nil || amountWei.Sign() <= 0 {
 		return fmt.Errorf("amount must be positive")
 	}
 

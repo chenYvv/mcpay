@@ -14,7 +14,7 @@ func TestSimplifiedAPI(t *testing.T) {
 		t.Fatalf("初始化BSC测试网失败: %v", err)
 	}
 
-	client := GetBSCClient()
+	client := GetClient()
 	if client == nil {
 		t.Fatal("获取BSC客户端失败")
 	}
@@ -50,7 +50,7 @@ func TestSimplifiedAPI(t *testing.T) {
 		}
 	} else {
 		// 如果主网连接成功，验证配置
-		client = GetBSCClient()
+		client = GetClient()
 		if client.IsTestnet() {
 			t.Error("客户端应该配置为主网")
 		}
@@ -82,12 +82,12 @@ func TestGlobalClientSingleton(t *testing.T) {
 	}
 
 	// 获取客户端实例
-	client1 := GetBSCClient()
-	client2 := GetBSCClient()
+	client1 := GetClient()
+	client2 := GetClient()
 
 	// 验证是同一个实例
 	if client1 != client2 {
-		t.Error("GetBSCClient应该返回同一个全局实例")
+		t.Error("GetClient应该返回同一个全局实例")
 	}
 
 	// 验证配置一致
@@ -112,7 +112,7 @@ func TestClientReset(t *testing.T) {
 		t.Fatalf("初始化BSC测试网失败: %v", err)
 	}
 
-	client1 := GetBSCClient()
+	client1 := GetClient()
 	if client1 == nil {
 		t.Fatal("获取第一个客户端实例失败")
 	}
@@ -126,7 +126,7 @@ func TestClientReset(t *testing.T) {
 		t.Fatalf("重置BSC测试网失败: %v", err)
 	}
 
-	client2 := GetBSCClient()
+	client2 := GetClient()
 	if client2 == nil {
 		t.Fatal("获取重置后的客户端实例失败")
 	}
