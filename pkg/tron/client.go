@@ -122,6 +122,7 @@ func newClient(isTest bool) (*Client, error) {
 	}
 
 	c := &Client{
+		isTest: isTest,
 		config: config,
 		grpc:   client.NewGrpcClientWithTimeout(config.Node, config.Timeout),
 	}

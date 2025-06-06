@@ -65,8 +65,23 @@ func WeiToNum(wei *big.Int) float64 {
 	return floatResult
 }
 
+type Transaction struct {
+	TransactionId string `json:"transaction_id"`
+	TokenInfo     struct {
+		Symbol   string `json:"symbol"`
+		Address  string `json:"address"`
+		Decimals int    `json:"decimals"`
+		Name     string `json:"name"`
+	} `json:"token_info"`
+	BlockTimestamp int64  `json:"block_timestamp"`
+	From           string `json:"from"`
+	To             string `json:"to"`
+	Type           string `json:"type"`
+	Value          string `json:"value"`
+}
+
 // 获取充值情况
-func GetUSDTRecharge(address string, startTimestamp int64) (*big.Float, error) {
+func GetUSDTTransactions(address string, startTimestamp int64) ([]Transaction, error) {
 
 	TEST_API := "https://nile.trongrid.io"
 	MAIN_API := "https://api.trongrid.io"
@@ -79,7 +94,7 @@ func GetUSDTRecharge(address string, startTimestamp int64) (*big.Float, error) {
 	}
 
 	// API URL
-	url := fmt.Sprintf("https://%s/v1/accounts/%s/transactions/trc20?contract_address=%s&only_to=true&min_timestamp=%d", apiUrl, address, contract_address, startTimestamp)
+	url := fmt.Sprintf("%s/v1/accounts/%s/transactions/trc20?contract_address=%s&only_to=true&min_timestamp=%d&limit=200", apiUrl, address, contract_address, startTimestamp)
 
 	// 发起 HTTP 请求
 	resp, err := http.Get(url)
@@ -101,21 +116,12 @@ func GetUSDTRecharge(address string, startTimestamp int64) (*big.Float, error) {
 
 	// 解析 JSON 响应
 	var response struct {
-		Data []struct {
-			Value string `json:"value"` // USDT 数量（最小单位）
-		} `json:"data"`
+		Data []Transaction `json:"data"`
 	}
+
 	if err := json.Unmarshal(body, &response); err != nil {
 		return nil, fmt.Errorf("failed to parse JSON response: %v", err)
 	}
 
-	// 计算总充值量
-	totalRecharge := big.NewFloat(0)
-	for _, tx := range response.Data {
-		wei := new(big.Int)
-		wei.SetString(tx.Value, 10)                                    // 转换为 big.Int
-		totalRecharge.Add(totalRecharge, WeiToNumWithDecimals(wei, 6)) // 转换为 USDT 单位
-	}
-
-	return totalRecharge, nil
+	return response.Data, nil
 }

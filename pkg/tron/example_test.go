@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/big"
 	"testing"
 	"time"
 
@@ -99,5 +100,35 @@ func TestTransferUSDT(t *testing.T) {
 	}
 	fmt.Printf("USDT transfer result: %+v\n", res)
 	fmt.Printf("USDT transfer txid: %s\n", res.TxID)
+
+}
+
+// 测试 USDT 转账
+func TestOrderUSDT(t *testing.T) {
+	// 使用测试网配置
+	// client, err := tron.NewClient(tron.TestNetConfig())
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// defer client.Close()
+
+	// 使用默认配置创建客户端
+	tron.InitTronClient(true)
+
+	transactions, err := tron.GetUSDTTransactions("TGESHsRbgoo72QoMN1nfmzbCMGm362eeSn", 0)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// 计算总充值量
+	totalRecharge := big.NewFloat(0)
+	for _, tx := range transactions {
+		wei := new(big.Int)
+		wei.SetString(tx.Value, 10)                                         // 转换为 big.Int
+		totalRecharge.Add(totalRecharge, tron.WeiToNumWithDecimals(wei, 6)) // 转换为 USDT 单位
+	}
+
+	fmt.Printf("Total transactions: %d\n", len(transactions))
+	fmt.Printf("Total totalRecharge: %f\n", totalRecharge)
 
 }
