@@ -206,3 +206,8 @@ func (c *Client) Close() error {
 	}
 	return nil
 }
+
+// 返回是否为测试网
+func (c *Client) IsTest() bool {
+	return c.isTest
+}

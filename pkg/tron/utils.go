@@ -1,7 +1,11 @@
 package tron
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"math/big"
+	"net/http"
 
 	"github.com/shopspring/decimal"
 )
@@ -59,4 +63,59 @@ func WeiToNum(wei *big.Int) float64 {
 	// 转换为float64
 	floatResult, _ := WeiToNumWithDecimals(wei, COMMON_DECIMALS).Float64()
 	return floatResult
+}
+
+// 获取充值情况
+func GetUSDTRecharge(address string, startTimestamp int64) (*big.Float, error) {
+
+	TEST_API := "https://nile.trongrid.io"
+	MAIN_API := "https://api.trongrid.io"
+
+	// 根据 GetClient().IsTest() 返回判断使用哪个 TEST_API 或者 MAIN_API
+	apiUrl := MAIN_API
+	contract_address := GetClient().config.GetUSDTContract()
+	if GetClient().IsTest() {
+		apiUrl = TEST_API
+	}
+
+	// API URL
+	url := fmt.Sprintf("https://%s/v1/accounts/%s/transactions/trc20?contract_address=%s&only_to=true&min_timestamp=%d", apiUrl, address, contract_address, startTimestamp)
+
+	// 发起 HTTP 请求
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch transactions: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// 读取响应内容
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %v", err)
+	}
+
+	// 检查 HTTP 状态码
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API request failed with status code %d: %s", resp.StatusCode, string(body))
+	}
+
+	// 解析 JSON 响应
+	var response struct {
+		Data []struct {
+			Value string `json:"value"` // USDT 数量（最小单位）
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(body, &response); err != nil {
+		return nil, fmt.Errorf("failed to parse JSON response: %v", err)
+	}
+
+	// 计算总充值量
+	totalRecharge := big.NewFloat(0)
+	for _, tx := range response.Data {
+		wei := new(big.Int)
+		wei.SetString(tx.Value, 10)                                    // 转换为 big.Int
+		totalRecharge.Add(totalRecharge, WeiToNumWithDecimals(wei, 6)) // 转换为 USDT 单位
+	}
+
+	return totalRecharge, nil
 }
