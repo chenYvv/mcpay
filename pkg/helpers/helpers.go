@@ -11,7 +11,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/shopspring/decimal"
 	"io"
 	"io/ioutil"
 	mathrand "math/rand"
@@ -25,6 +24,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 // Empty 类似于 PHP 的 empty() 函数
@@ -88,15 +89,21 @@ func FirstElement(args []string) string {
 	return ""
 }
 
-// RandomString 生成长度为 length 的随机字符串
-func RandomString(length int) string {
-	mathrand.Seed(time.Now().UnixNano())
-	letters := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = letters[mathrand.Intn(len(letters))]
+// RandomInt 生成指定范围内的随机整数
+func RandomInt(max int) int {
+	if max <= 0 {
+		return 0
 	}
-	return string(b)
+	return int(time.Now().UnixNano() % int64(max))
+}
+
+func RandomString(length int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	result := make([]byte, length)
+	for i := range result {
+		result[i] = charset[RandomInt(len(charset))]
+	}
+	return string(result)
 }
 
 func IsMobile(userAgent string) bool {
@@ -525,9 +532,14 @@ func Yuan2Fen(a float64) float64 {
 	return DecimalMul(a, 100)
 }
 
-func GenerateOrderNo() string {
-	rd := mathrand.Intn(89999) + 10000
-	return strconv.Itoa(int(time.Now().Unix()*100000) + rd)
+func GenerateOrderNo(prefix string) string {
+	src := mathrand.NewSource(time.Now().UnixNano())
+	r := mathrand.New(src)
+	timestamp := time.Now().Format("20060102150405") // yyyyMMddHHmmss
+	millis := time.Now().UnixNano() / 1e6
+	random := r.Intn(100000) // 0 ~ 99999
+
+	return fmt.Sprintf("%s%s%d%05d", prefix, timestamp, millis%1000, random)
 }
 
 func QueryAsciiSortNoEmpty(params map[string]interface{}) string {

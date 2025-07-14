@@ -1,12 +1,18 @@
 package controllers
 
 import (
-	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
 	"log/slog"
+	"mcpay/internal/common/payment"
+	models "mcpay/model"
+	"mcpay/pkg/constants"
+	"mcpay/pkg/database"
 	"mcpay/pkg/helpers"
 	"mcpay/pkg/logger"
+	"time"
+
+	"gorm.io/gorm"
 
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -43,27 +49,112 @@ func (ctr *OrderController) Test() {
 
 // 创建订单
 func (ctr *OrderController) Create() {
-	reqBody, _ := ctr.Gin.GetRawData()
-	logger.Info("创建订单", slog.String("请求参数", string(reqBody)))
-	ctr.Gin.Request.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody))
+	//reqBody, _ := ctr.Gin.GetRawData()
+	//logger.Info("创建订单", string(reqBody))
+	//ctr.Gin.Request.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody))
 
 	request := new(struct {
 		AppId       string `json:"app_id"`
+		Uid         int    `json:"uid"`
 		OrderId     string `json:"order_id"`
-		Network     string `json:"network"`
 		Amount      string `json:"amount"`
 		CallbackUrl string `json:"callback_url"`
+		RedirectUrl string `json:"redirect_url"`
 		Sign        string `json:"sign"`
 	})
 
 	if err := ctr.Gin.ShouldBind(request); err != nil {
-		ctr.JSON(-1, "params err", nil)
+		ctr.ResponseCode(constants.ParamsError, nil)
 		return
 	}
 
-	logger.Info("创建订单", slog.Any("请求参数", helpers.Josn(request)))
+	logger.Info("创建订单", slog.String("params", helpers.Json2Struct(request)))
 
-	ctr.ResponseSuc("", nil)
+	// 获取 app
+	app, err := models.GetAppById(request.AppId)
+	if err != nil {
+		ctr.ResponseCode(constants.ParamsError, nil)
+		return
+	}
+
+	payChannel := app.GetPayChannel()
+	if len(payChannel) == 0 {
+		ctr.ResponseCode(constants.ChannelError, nil)
+		return
+	}
+
+	// 转换网络字符串为常量
+	// network := models.GetNetworkByString(request.Network)
+
+	// 获取空闲地址钱包
+	// models.GetAvailableAddressByNetwork(network)
+
+	timeNow := time.Now()
+
+	//response := payment.CollectResult{}
+
+	err = database.DB.Transaction(func(tx *gorm.DB) error {
+
+		// 创建订单
+		order := models.Order{
+			OrderId:         helpers.GenerateOrderNo(""),
+			Amount:          helpers.StringToFloat64(request.Amount),
+			Uid:             request.Uid,
+			AppId:           helpers.Str2Int(request.AppId),
+			CallbackUrl:     request.CallbackUrl,
+			RedirectUrl:     request.RedirectUrl,
+			MerchantOrderId: request.OrderId,
+			CreatedAt:       timeNow,
+			UpdatedAt:       timeNow,
+		}
+
+		err = tx.Create(&order).Error
+		if err != nil {
+			return err
+		}
+
+		// 唤起支付
+		collectResult := payment.CollectResult{}
+		var payRes error
+		var pay payment.Payment
+		for _, channel := range payChannel {
+			pay, payRes = payment.GetProvider(channel)
+			if payRes != nil {
+				continue
+			}
+			collectResult, payRes = pay.Collect(tx, order, nil)
+			if payRes != nil {
+				continue
+			}
+			break
+		}
+
+		if payRes != nil {
+			return payRes
+		}
+
+		fmt.Println(payChannel)
+
+		// 更新订单信息
+		err = tx.Model(models.Order{}).Where("order_id = ?", order.OrderId).Updates(
+			map[string]interface{}{
+				"third_order_id": collectResult.ThirdOrderId,
+			},
+		).Error
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		ctr.ResponseCode(constants.SystemlError, nil)
+		return
+	}
+
+	ctr.ResponseCode(constants.Success, nil)
 	return
 
 }

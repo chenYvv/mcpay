@@ -3,25 +3,22 @@ package bootstrap
 import (
 	"fmt"
 	"github.com/spf13/viper"
-	//"mcpay/model"
+	models "mcpay/model"
 	"mcpay/pkg/database"
 )
 
 func InitDb() {
 	var err error
 	database.DB, err = database.MysqlDB(
-		viper.GetString("database.mysql.DSN"),
-		viper.GetInt("database.mysql.max_open_connections"),
-		viper.GetInt("database.mysql.max_idle_connections"),
-		viper.GetInt("database.mysql.max_life_seconds"))
+		viper.GetString("MYSQL_DSN"),
+		viper.GetInt("MYSQL_MAX_OPEN_CONNECTIONS"),
+		viper.GetInt("MYSQL_MAX_IDLE_CONNECTIONS"),
+		viper.GetInt("MYSQL_MAX_LIFE_SECONDS"),
+		viper.GetBool("APP_DEBUG"),
+	)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 
-	//uri := fmt.Sprintf("%s:%s@%s", viper.GetString("database.mongo.user"), viper.GetString("database.mongo.pwd"), viper.GetString("database.mongo.host"))
-
-	//database.NewConnectionV1(uri)
-
-	//models.IniGlobalConfigs()
-
+	models.InitGlobalConfig()
 }

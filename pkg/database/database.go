@@ -11,7 +11,7 @@ import (
 var DB *gorm.DB
 
 // MysqlDB 数据库
-func MysqlDB(dsn string, maxOpenConnections int, maxIdleConnections int, maxLifeSeconds int) (*gorm.DB, error) {
+func MysqlDB(dsn string, maxOpenConnections int, maxIdleConnections int, maxLifeSeconds int, debug bool) (*gorm.DB, error) {
 
 	//var dbConfig gorm.Dialector
 	//
@@ -29,7 +29,9 @@ func MysqlDB(dsn string, maxOpenConnections int, maxIdleConnections int, maxLife
 		panic(err)
 	}
 
-	//instance = instance.Debug()
+	if debug {
+		instance = instance.Debug()
+	}
 
 	// 获取底层的 sqlDB
 	SqlDB, err := instance.DB()

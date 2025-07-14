@@ -65,6 +65,15 @@ func WeiToNum(wei *big.Int) float64 {
 	return floatResult
 }
 
+// WeiStrToNum 将最小单位转换为金额
+func WeiStrToNum(str string) float64 {
+	wei := new(big.Int)
+	wei.SetString(str, 10)
+	// 转换为float64
+	floatResult, _ := WeiToNumWithDecimals(wei, COMMON_DECIMALS).Float64()
+	return floatResult
+}
+
 type Transaction struct {
 	TransactionId string `json:"transaction_id"`
 	TokenInfo     struct {
@@ -81,6 +90,7 @@ type Transaction struct {
 }
 
 // 获取充值情况
+// 文档 https://developers.tron.network/reference/get-trc20-transaction-info-by-account-address
 func GetUSDTTransactions(address string, startTimestamp int64) ([]Transaction, error) {
 
 	TEST_API := "https://nile.trongrid.io"
@@ -94,8 +104,8 @@ func GetUSDTTransactions(address string, startTimestamp int64) ([]Transaction, e
 	}
 
 	// API URL
-	url := fmt.Sprintf("%s/v1/accounts/%s/transactions/trc20?contract_address=%s&only_to=true&min_timestamp=%d&limit=200", apiUrl, address, contract_address, startTimestamp)
-
+	url := fmt.Sprintf("%s/v1/accounts/%s/transactions/trc20?contract_address=%s&only_confirmed=true&only_to=true&min_timestamp=%d&limit=100", apiUrl, address, contract_address, startTimestamp)
+	fmt.Println(url)
 	// 发起 HTTP 请求
 	resp, err := http.Get(url)
 	if err != nil {

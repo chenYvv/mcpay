@@ -2,12 +2,16 @@ package main
 
 import (
 	"fmt"
-	"mcpay/internal/api/bootstrap"
-	"mcpay/pkg/bsc"
-	"mcpay/pkg/tron"
-
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+	"mcpay/internal/api/bootstrap"
+	_ "mcpay/internal/common/payment/bsc"
+	_ "mcpay/internal/common/payment/tron"
+	models "mcpay/model"
+	"mcpay/pkg/bsc"
+	"mcpay/pkg/config"
+	"mcpay/pkg/idcode"
+	"mcpay/pkg/tron"
 )
 
 func main() {
@@ -22,10 +26,35 @@ func main() {
 	bootstrap.InitDb()
 	bootstrap.InitRoutes(r)
 
-	tron.InitTronClient(true)
-	bsc.InitBSCClient(true)
+	err := idcode.Init(models.Global().OrderCodeSalt, 8)
+	if err != nil {
+		panic(err)
+	}
 
-	addr := fmt.Sprintf(":%s", viper.GetString("server.port"))
+	// 波场
+	err = tron.InitTronClient(viper.GetBool("APP_DEBUG"))
+	if err != nil {
+		panic(err)
+	} else {
+		fmt.Println("InitTronClient SUCCESS")
+	}
+
+	// 币安
+	err = bsc.InitBSCClient(viper.GetBool("APP_DEBUG"))
+	if err != nil {
+		panic(err)
+	} else {
+		fmt.Println("InitBSCClient SUCCESS")
+	}
+
+	// 检测超时订单
+	models.UpdateTimeoutOrders()
+
+	// 定时任务
+	bootstrap.InitCrontab()
+
+	addr := fmt.Sprintf(":%s", config.GetString("APP_PORT", 8000))
 	// Start the server
 	r.Run(addr)
+
 }

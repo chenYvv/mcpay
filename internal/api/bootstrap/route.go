@@ -13,6 +13,8 @@ import (
 func InitRoutes(r *gin.Engine) {
 	r.Use(middlewares.Recovery(), middlewares.Cors())
 
+	r.POST("/test/createaddress", routeHandle(&controllers.TestController{}, "CreateAddress"))
+
 	r.POST("/order/create", routeHandle(&controllers.OrderController{}, "Create"))
 
 	//r.GET("/test", routeHandle(&controllers.PayController{}, "Test"))

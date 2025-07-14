@@ -631,3 +631,23 @@ func (c *BSCClient) GetNetworkInfo() (map[string]interface{}, error) {
 
 	return info, nil
 }
+
+func (c *BSCClient) BlockNumber() int {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	// 获取最新区块号
+	blockNumber, err := c.client.BlockNumber(ctx)
+	if err != nil {
+		return 0
+	}
+	return int(blockNumber)
+}
+
+// WeiStrToNum 将最小单位转换为金额
+func WeiStrToNum(str string) float64 {
+	wei := new(big.Int)
+	wei.SetString(str, 10)
+	// 转换为float64
+	floatResult, _ := WeiToNumWithDecimals(wei, COMMON_DECIMALS).Float64()
+	return floatResult
+}

@@ -19,7 +19,7 @@ func InitLogger() {
 	// )
 	// 使用新的 slog 日志系统
 	logger.InitSlog(
-		viper.GetString("server.name"),
-		viper.GetBool("server.debug"),
+		viper.GetString("APP_NAME"),
+		viper.GetBool("APP_DEBUG"),
 	)
 }

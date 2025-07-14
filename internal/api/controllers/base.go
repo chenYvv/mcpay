@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
+	"mcpay/pkg/constants"
 	"mcpay/pkg/database"
 	"mcpay/pkg/helpers"
 	"mcpay/pkg/logger"
@@ -46,11 +47,21 @@ func (ctr *BaseController) IsAjax() bool {
 }
 
 // JSON 返回 JSON 数据
-func (ctr *BaseController) JSON(status int, message string, data interface{}) {
+func (ctr *BaseController) JSON(code int, message string, data interface{}) {
 	ctr.Gin.JSON(http.StatusOK, gin.H{
-		"status":  status,
-		"message": message,
-		"data":    data,
+		"code": code,
+		"msg":  message,
+		"data": data,
+	})
+	return
+}
+
+// JSON 返回 JSON 数据
+func (ctr *BaseController) ResponseCode(codeInfo constants.CodeInfo, data interface{}) {
+	ctr.Gin.JSON(http.StatusOK, gin.H{
+		"code": codeInfo.Code,
+		"msg":  codeInfo.Message,
+		"data": data,
 	})
 	return
 }
