@@ -8,10 +8,11 @@ import (
 	_ "mcpay/internal/common/payment/bsc"
 	_ "mcpay/internal/common/payment/tron"
 	models "mcpay/model"
-	"mcpay/pkg/bsc"
+	"mcpay/pkg/chain/bsc"
+	"mcpay/pkg/chain/tron"
 	"mcpay/pkg/config"
 	"mcpay/pkg/idcode"
-	"mcpay/pkg/tron"
+	"mcpay/pkg/logger"
 )
 
 func main() {
@@ -36,7 +37,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	} else {
-		fmt.Println("InitTronClient SUCCESS")
+		logger.Info("InitTronClient SUCCESS")
 	}
 
 	// 币安
@@ -44,7 +45,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	} else {
-		fmt.Println("InitBSCClient SUCCESS")
+		logger.Info("InitBSCClient SUCCESS")
 	}
 
 	// 检测超时订单

@@ -1,0 +1,22 @@
+CREATE TABLE `orders` (
+                          `id` int NOT NULL AUTO_INCREMENT,
+                          `uid` int DEFAULT NULL,
+                          `app_id` int NOT NULL,
+                          `order_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT '' COMMENT '订单号',
+                          `amount` decimal(10,2) unsigned NOT NULL DEFAULT '0.00' COMMENT '订单金额',
+                          `amount_true` decimal(10,2) unsigned NOT NULL DEFAULT '0.00' COMMENT '到账金额',
+                          `created_at` bigint NOT NULL COMMENT '创建时间',
+                          `callback_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT '' COMMENT '通知地址',
+                          `callback_state` int NOT NULL DEFAULT '0' COMMENT '通知状态：0:失败；1:成功；',
+                          `callback_err` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '通知报错信息',
+                          `callback_date` bigint DEFAULT NULL COMMENT '最后通知时间',
+                          `callback_times` int NOT NULL DEFAULT '0' COMMENT '通知次数',
+                          `merchant_order_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT '' COMMENT '商户订单号',
+                          `third_order_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT '' COMMENT '第三方订单号',
+                          `status` int DEFAULT '1' COMMENT '1:待支付；2:成功；3:失败',
+                          `redirect_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT '' COMMENT '支付成功跳转地址',
+                          `updated_at` bigint DEFAULT NULL COMMENT '更新时间',
+                          PRIMARY KEY (`id`) USING BTREE,
+                          UNIQUE KEY `order_id` (`order_id`) USING BTREE,
+                          UNIQUE KEY `app_id_merchant_order_id_unique` (`app_id`,`merchant_order_id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=593 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ROW_FORMAT=DYNAMIC COMMENT='订单表';

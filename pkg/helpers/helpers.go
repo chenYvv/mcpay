@@ -359,11 +359,14 @@ func CurlGet(url string, params map[string]interface{}, header map[string]string
 }
 
 func Str2Int(str string) int {
-	num, err := strconv.Atoi(str)
-	if err != nil {
-		fmt.Printf("转换出错: %v\n", err)
-	}
+	num, _ := strconv.Atoi(str)
 	return num
+}
+
+// StrToInt64 安全地将字符串转换为 int64
+func StrToInt64(s string) int64 {
+	i, _ := strconv.ParseInt(s, 10, 64)
+	return i
 }
 
 func Round(num float64, precision int) float64 {

@@ -98,14 +98,14 @@ func monitorWalletTransactions(addressList []models.Address, batchSize int, netw
 func getTransactions(address models.Address) {
 	var transactions []models.TransactionItem
 	if address.IsTron() {
-		transactions, _ = models.GetTronTransaction(address.Address, address.LastUsedAt.UnixMilli())
+		transactions, _ = models.GetTronTransaction(address.Address, address.LastUsedAt*1000)
 	} else if address.IsBsc() {
 		orderAddress := address.GetPendingOrderAddress()
 		transactions, _ = models.GetBscTransaction(address.Address, int64(orderAddress.BlockNum))
 	}
 
 	if len(transactions) > 0 {
-		timeNow := time.Now()
+		timeNow := time.Now().Unix()
 		for _, transaction := range transactions {
 			// 检查是否写入过
 			history := models.Transaction{}

@@ -10,18 +10,18 @@ import (
 
 // Address 钱包地址池表
 type Address struct {
-	Id         int       `gorm:"column:id;type:int(11);primary_key;AUTO_INCREMENT" json:"id"`
-	Network    int       `gorm:"column:network;type:int(11);default:0;comment:网络：1:波场；2:币安;NOT NULL" json:"network"`
-	BlockNum   int       `gorm:"column:blockNum;type:int(11);default:0;comment:最新区块高度;NOT NULL" json:"blockNum"`
-	PathIndex  int       `gorm:"column:path_index;type:int(11);default:1;NOT NULL" json:"path_index"`
-	Address    string    `gorm:"column:address;type:varchar(255);comment:地址;NOT NULL" json:"address"`
-	Balance    float64   `gorm:"column:balance;type:decimal(36,18);default:0.000000000000000000;comment:剩余额度;NOT NULL" json:"balance"`
-	PrivateKey string    `gorm:"column:private_key;type:varchar(255);comment:私钥;NOT NULL" json:"private_key"`
-	Status     int       `gorm:"column:status;type:tinyint(1);default:1;comment:1:可用；2:使用中；3:禁用;NOT NULL" json:"status"`
-	UsedTimes  int       `gorm:"column:used_times;type:int(11);default:0;comment:使用次数;NOT NULL" json:"used_times"`
-	CreatedAt  time.Time `gorm:"column:created_at;type:datetime;comment:创建时间" json:"created_at"`
-	UpdatedAt  time.Time `gorm:"column:updated_at;type:datetime;comment:更新时间" json:"updated_at"`
-	LastUsedAt time.Time `gorm:"column:last_used_at;type:datetime;comment:最后使用时间" json:"last_used_at"`
+	Id         int     `gorm:"column:id;type:int(11);primary_key;AUTO_INCREMENT" json:"id"`
+	Network    int     `gorm:"column:network;type:int(11);default:0;comment:网络：1:波场；2:币安;NOT NULL" json:"network"`
+	BlockNum   int     `gorm:"column:blockNum;type:int(11);default:0;comment:最新区块高度;NOT NULL" json:"blockNum"`
+	PathIndex  int     `gorm:"column:path_index;type:int(11);default:1;NOT NULL" json:"path_index"`
+	Address    string  `gorm:"column:address;type:varchar(255);comment:地址;NOT NULL" json:"address"`
+	Balance    float64 `gorm:"column:balance;type:decimal(36,18);default:0.000000000000000000;comment:剩余额度;NOT NULL" json:"balance"`
+	PrivateKey string  `gorm:"column:private_key;type:varchar(255);comment:私钥;NOT NULL" json:"private_key"`
+	Status     int     `gorm:"column:status;type:tinyint(1);default:1;comment:1:可用；2:使用中；3:禁用;NOT NULL" json:"status"`
+	UsedTimes  int     `gorm:"column:used_times;type:int(11);default:0;comment:使用次数;NOT NULL" json:"used_times"`
+	CreatedAt  int64   `gorm:"column:created_at;type:bigint(20);comment:创建时间;NOT NULL" json:"created_at"`
+	UpdatedAt  int64   `gorm:"column:updated_at;type:bigint(20);comment:更新时间;NOT NULL" json:"updated_at"`
+	LastUsedAt int64   `gorm:"column:last_used_at;type:bigint(20);comment:最后使用时间" json:"last_used_at"`
 }
 
 // TableName 指定表名
@@ -59,7 +59,7 @@ func (m *Address) IsInUse() bool {
 }
 
 // MarkAsUsed 标记为使用中
-func (m *Address) MarkAsUsed(tx *gorm.DB, lastUsedAt time.Time) error {
+func (m *Address) MarkAsUsed(tx *gorm.DB, lastUsedAt int64) error {
 	//now := time.Now()
 	return tx.Model(m).Updates(map[string]interface{}{
 		"status":       AddressStatusInUse,
@@ -201,7 +201,7 @@ func CreateAddress(network int, count int) {
 			PrivateKey: "",
 			Status:     AddressStatusAvailable,
 			UsedTimes:  0,
-			CreatedAt:  now,
+			CreatedAt:  now.Unix(),
 		})
 
 		startIndex++

@@ -10,5 +10,5 @@ type TestController struct {
 
 func (ctr *TestController) CreateAddress() {
 	models.CreateAddress(models.NetworkBsc, 10)
-	//models.CreateAddress(models.NetworkTron, 10)
+	models.CreateAddress(models.NetworkTron, 10)
 }

@@ -33,8 +33,6 @@ func (ctr *OrderController) Test() {
 
 	paramsJSON, _ := json.Marshal(params)
 
-	//logger.Info("测试 1111111111111111111")
-
 	gameCallbackUrl := viper.GetString("G_MConfig.game_callback_url")
 	res, errPost := helpers.HttpPost(gameCallbackUrl, nil, paramsJSON)
 
@@ -57,6 +55,7 @@ func (ctr *OrderController) Create() {
 		AppId       string `json:"app_id"`
 		Uid         int    `json:"uid"`
 		OrderId     string `json:"order_id"`
+		Currency    string `json:"currency"`
 		Amount      string `json:"amount"`
 		CallbackUrl string `json:"callback_url"`
 		RedirectUrl string `json:"redirect_url"`
@@ -89,7 +88,7 @@ func (ctr *OrderController) Create() {
 	// 获取空闲地址钱包
 	// models.GetAvailableAddressByNetwork(network)
 
-	timeNow := time.Now()
+	timeNow := time.Now().Unix()
 
 	//response := payment.CollectResult{}
 
@@ -98,6 +97,7 @@ func (ctr *OrderController) Create() {
 		// 创建订单
 		order := models.Order{
 			OrderId:         helpers.GenerateOrderNo(""),
+			Amount:          helpers.StringToFloat64(request.Amount),
 			Amount:          helpers.StringToFloat64(request.Amount),
 			Uid:             request.Uid,
 			AppId:           helpers.Str2Int(request.AppId),

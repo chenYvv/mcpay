@@ -3,7 +3,7 @@ package models
 import (
 	"go.uber.org/zap"
 	"log/slog"
-	"mcpay/pkg/bsc"
+	"mcpay/pkg/chain/bsc"
 	"mcpay/pkg/database"
 	"mcpay/pkg/logger"
 	"time"
@@ -13,23 +13,26 @@ import (
 
 // 订单表
 type Order struct {
-	Id              int       `gorm:"column:id;type:int(11);primary_key;AUTO_INCREMENT" json:"id"`
-	Uid             int       `gorm:"column:uid;type:int(11)" json:"uid"`
-	AppId           int       `gorm:"column:app_id;type:int(11);NOT NULL" json:"app_id"`
-	OrderId         string    `gorm:"column:order_id;type:varchar(255);comment:订单号;NOT NULL" json:"order_id"`
-	Amount          float64   `gorm:"column:amount;type:decimal(10,2) unsigned;default:0.00;comment:订单金额;NOT NULL" json:"amount"`
-	AmountTrue      float64   `gorm:"column:amount_true;type:decimal(10,2) unsigned;default:0.00;comment:到账金额;NOT NULL" json:"amount_true"`
-	CreatedAt       time.Time `gorm:"column:created_at;type:datetime;comment:创建时间;NOT NULL" json:"created_at"`
-	CallbackUrl     string    `gorm:"column:callback_url;type:varchar(255);comment:通知地址" json:"callback_url"`
-	CallbackState   int       `gorm:"column:callback_state;type:int(11);default:0;comment:通知状态：0:失败；1:成功；;NOT NULL" json:"callback_state"`
-	CallbackErr     string    `gorm:"column:callback_err;type:varchar(500);comment:通知报错信息" json:"callback_err"`
-	CallbackDate    time.Time `gorm:"column:callback_date;type:datetime;comment:最后通知时间" json:"callback_date"`
-	CallbackTimes   int       `gorm:"column:callback_times;type:int(11);default:0;comment:通知次数;NOT NULL" json:"callback_times"`
-	MerchantOrderId string    `gorm:"column:merchant_order_id;type:varchar(255);comment:商户订单号" json:"merchant_order_id"`
-	ThirdOrderId    string    `gorm:"column:third_order_id;type:varchar(255);comment:第三方订单号" json:"third_order_id"`
-	Status          int       `gorm:"column:status;type:int(11);default:1;comment:1:待支付；2:成功；3:失败" json:"status"`
-	RedirectUrl     string    `gorm:"column:redirect_url;type:varchar(255);comment:支付成功跳转地址" json:"redirect_url"`
-	UpdatedAt       time.Time `gorm:"column:updated_at;type:datetime;comment:更新时间" json:"updated_at"`
+	Id              int     `gorm:"column:id;type:int(11);primary_key;AUTO_INCREMENT" json:"id"`
+	Uid             int     `gorm:"column:uid;type:int(11)" json:"uid"`
+	AppId           int     `gorm:"column:app_id;type:int(11);NOT NULL" json:"app_id"`
+	OrderId         string  `gorm:"column:order_id;type:varchar(255);comment:订单号;NOT NULL" json:"order_id"`
+	Currency        string  `gorm:"column:currency;type:varchar(255);comment:法币类型：USD,INR;NOT NULL" json:"currency"`
+	Amount          float64 `gorm:"column:amount;type:decimal(10,4) unsigned;default:0.0000;comment:订单法币金额;NOT NULL" json:"amount"`
+	AmountShow      float64 `gorm:"column:amount_show;type:decimal(10,4);comment:显示数量，主要用在token支付" json:"amount_show"`
+	AmountSum       float64 `gorm:"column:amount_sum;type:decimal(36,18);comment:所需支付数量，主要用于token支付" json:"amount_sum"`
+	AmountTrue      float64 `gorm:"column:amount_true;type:decimal(36,18);comment:实际到账数量" json:"amount_true"`
+	CreatedAt       int64   `gorm:"column:created_at;type:bigint(20);comment:创建时间;NOT NULL" json:"created_at"`
+	CallbackUrl     string  `gorm:"column:callback_url;type:varchar(255);comment:通知地址" json:"callback_url"`
+	CallbackState   int     `gorm:"column:callback_state;type:int(11);default:0;comment:通知状态：0:失败；1:成功；;NOT NULL" json:"callback_state"`
+	CallbackErr     string  `gorm:"column:callback_err;type:varchar(500);comment:通知报错信息" json:"callback_err"`
+	CallbackDate    int64   `gorm:"column:callback_date;type:bigint(20);comment:最后通知时间" json:"callback_date"`
+	CallbackTimes   int     `gorm:"column:callback_times;type:int(11);default:0;comment:通知次数;NOT NULL" json:"callback_times"`
+	MerchantOrderId string  `gorm:"column:merchant_order_id;type:varchar(255);comment:商户订单号" json:"merchant_order_id"`
+	ThirdOrderId    string  `gorm:"column:third_order_id;type:varchar(255);comment:第三方订单号" json:"third_order_id"`
+	Status          int     `gorm:"column:status;type:int(11);default:1;comment:1:待支付；2:成功；3:失败" json:"status"`
+	RedirectUrl     string  `gorm:"column:redirect_url;type:varchar(255);comment:支付成功跳转地址" json:"redirect_url"`
+	UpdatedAt       int64   `gorm:"column:updated_at;type:bigint(20);comment:更新时间" json:"updated_at"`
 
 	// 非数据库
 	Address []Address `gorm:"-" json:"address"`
@@ -213,7 +216,7 @@ func GetChainPendingOrdersWithAddress() []Order {
 // UpdateTimeoutOrders 订单超时状态修改
 func UpdateTimeoutOrders() {
 
-	thresholdTime := time.Now().Add(-time.Duration(OrderTimeLimit) * time.Second)
+	thresholdTime := time.Now().Add(-time.Duration(OrderTimeLimit) * time.Second).Unix()
 
 	err := database.DB.Transaction(func(tx *gorm.DB) error {
 		// 订单超时 状态修改
