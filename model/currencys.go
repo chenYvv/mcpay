@@ -1,5 +1,10 @@
 package models
 
+import (
+	"mcpay/pkg/chain"
+	"mcpay/pkg/database"
+)
+
 type Currency struct {
 	Id        int     `gorm:"column:id;type:int(11);primary_key;AUTO_INCREMENT" json:"id"`
 	Name      string  `gorm:"column:name;type:varchar(255);comment:法币;NOT NULL" json:"name"`
@@ -10,4 +15,34 @@ type Currency struct {
 // TableName 指定表名
 func (m *Currency) TableName() string {
 	return "currency"
+}
+
+// 状态常量
+const (
+	CurrencyUSD = "USD"
+	CurrencyINR = "INR"
+)
+
+func UpdateCurrencyRateUSDT() {
+	data, err := chain.GetUSDTPrice()
+
+	if err != nil {
+
+	}
+
+	if data.USD > 0 {
+		err = database.DB.Model(&Currency{}).
+			Where("name = ?", CurrencyUSD).
+			Updates(map[string]interface{}{"rate_USDT": data.USD}).Error
+		if err != nil {
+		}
+	}
+
+	if data.INR > 0 {
+		err = database.DB.Model(&Currency{}).
+			Where("name = ?", CurrencyINR).
+			Updates(map[string]interface{}{"rate_USDT": data.INR}).Error
+		if err != nil {
+		}
+	}
 }

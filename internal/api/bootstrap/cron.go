@@ -23,8 +23,16 @@ func InitCrontab() {
 		cron.Recover(cron.DefaultLogger),
 	))
 
+	// 更新费率
+	_, err := cronScheduler.AddFunc("@every 1m", models.UpdateCurrencyRateUSDT)
+	if err != nil {
+		log.Printf("Failed to add UpdateCurrencyRateUSDT cron job: %v", err)
+	} else {
+		log.Println("UpdateCurrencyRateUSDT monitoring job added")
+	}
+
 	// 更新超时订单状态
-	_, err := cronScheduler.AddFunc("@every 1m", models.UpdateTimeoutOrders)
+	_, err = cronScheduler.AddFunc("@every 1m", models.UpdateTimeoutOrders)
 	if err != nil {
 		log.Printf("Failed to add TRON cron job: %v", err)
 	} else {

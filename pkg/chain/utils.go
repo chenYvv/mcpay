@@ -1,4 +1,4 @@
-package bsc
+package chain
 
 import (
 	"encoding/json"

@@ -98,7 +98,6 @@ func (ctr *OrderController) Create() {
 		order := models.Order{
 			OrderId:         helpers.GenerateOrderNo(""),
 			Amount:          helpers.StringToFloat64(request.Amount),
-			Amount:          helpers.StringToFloat64(request.Amount),
 			Uid:             request.Uid,
 			AppId:           helpers.Str2Int(request.AppId),
 			CallbackUrl:     request.CallbackUrl,

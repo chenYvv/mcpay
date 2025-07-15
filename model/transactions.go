@@ -2,9 +2,9 @@ package models
 
 import (
 	"math/rand"
-	"mcpay/pkg/bsc"
+	"mcpay/pkg/chain/bsc"
+	"mcpay/pkg/chain/tron"
 	"mcpay/pkg/helpers"
-	"mcpay/pkg/tron"
 	"time"
 )
 
