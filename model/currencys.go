@@ -23,11 +23,20 @@ const (
 	CurrencyINR = "INR"
 )
 
+func GetCurrencyByName(name string) (*Currency, error) {
+	var data *Currency
+	err := database.DB.Where("name = ?", name).Find(&data).Error
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
 func UpdateCurrencyRateUSDT() {
 	data, err := chain.GetUSDTPrice()
 
 	if err != nil {
-
+		return
 	}
 
 	if data.USD > 0 {

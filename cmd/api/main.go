@@ -16,11 +16,7 @@ import (
 )
 
 func main() {
-	// Initialize the configuration
 	// config.InitConfig("config.yml")
-	// Initialize the database
-	// db.InitDB()
-	// Initialize the router
 	r := gin.Default()
 	bootstrap.IniConfig()
 	bootstrap.InitLogger()
@@ -48,8 +44,8 @@ func main() {
 		logger.Info("InitBSCClient SUCCESS")
 	}
 
-	// 更新费率
-	models.UpdateCurrencyRateUSDT()
+	// 更新汇率
+	//models.UpdateCurrencyRateUSDT()
 
 	// 检测超时订单
 	models.UpdateTimeoutOrders()

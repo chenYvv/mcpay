@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"mcpay/internal/common/payment"
 	models "mcpay/model"
@@ -56,6 +55,7 @@ func (ctr *OrderController) Create() {
 		Uid         int    `json:"uid"`
 		OrderId     string `json:"order_id"`
 		Currency    string `json:"currency"`
+		Channel     int    `json:"channel"`
 		Amount      string `json:"amount"`
 		CallbackUrl string `json:"callback_url"`
 		RedirectUrl string `json:"redirect_url"`
@@ -100,6 +100,7 @@ func (ctr *OrderController) Create() {
 			Amount:          helpers.StringToFloat64(request.Amount),
 			Uid:             request.Uid,
 			AppId:           helpers.Str2Int(request.AppId),
+			ChannelId:       request.Channel,
 			CallbackUrl:     request.CallbackUrl,
 			RedirectUrl:     request.RedirectUrl,
 			MerchantOrderId: request.OrderId,
@@ -131,8 +132,6 @@ func (ctr *OrderController) Create() {
 		if payRes != nil {
 			return payRes
 		}
-
-		fmt.Println(payChannel)
 
 		// 更新订单信息
 		err = tx.Model(models.Order{}).Where("order_id = ?", order.OrderId).Updates(

@@ -17,8 +17,9 @@ type Order struct {
 	Uid             int     `gorm:"column:uid;type:int(11)" json:"uid"`
 	AppId           int     `gorm:"column:app_id;type:int(11);NOT NULL" json:"app_id"`
 	OrderId         string  `gorm:"column:order_id;type:varchar(255);comment:订单号;NOT NULL" json:"order_id"`
-	Currency        string  `gorm:"column:currency;type:varchar(255);comment:法币类型：USD,INR;NOT NULL" json:"currency"`
-	Amount          float64 `gorm:"column:amount;type:decimal(10,4) unsigned;default:0.0000;comment:订单法币金额;NOT NULL" json:"amount"`
+	ChannelId       int     `gorm:"column:channel_id;type:int(11);default:0;comment:支付渠道ID;NOT NULL" json:"channel_id"`
+	CurrencyId      int     `gorm:"column:currency_id;type:int(11);default:0;comment:法币ID;NOT NULL" json:"currency_id"`
+	Amount          float64 `gorm:"column:amount;type:decimal(10,2) unsigned;default:0.00;comment:订单法币金额;NOT NULL" json:"amount"`
 	AmountShow      float64 `gorm:"column:amount_show;type:decimal(10,4);comment:显示数量，主要用在token支付" json:"amount_show"`
 	AmountSum       float64 `gorm:"column:amount_sum;type:decimal(36,18);comment:所需支付数量，主要用于token支付" json:"amount_sum"`
 	AmountTrue      float64 `gorm:"column:amount_true;type:decimal(36,18);comment:实际到账数量" json:"amount_true"`
